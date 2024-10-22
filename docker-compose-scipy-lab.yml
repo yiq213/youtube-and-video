@@ -1,0 +1,14 @@
+services:
+  jupyter:
+    environment:
+      JUPYTER_ENABLE_LAB: yes
+      CHOWN_HOME: yes   # Next three env vars are needed to fix permission issues on WSL
+      CHOWN_HOME_OPTS: '-R'
+      JUPYTER_ALLOW_INSECURE_WRITES: true
+    image: jupyter/scipy-notebook:latest
+    container_name: scipy-lab
+    volumes:
+      - ./notebooks:/home/jovyan
+    ports:
+      - 8888:8888
+    command: start-notebook.sh --NotebookApp.token='' --ContentsManager.allow_hidden=True
