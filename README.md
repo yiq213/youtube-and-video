@@ -2,19 +2,26 @@
 
 ## Repo Overview
 
-Here you will find examples of how to work with YouTube videos using Python. I will demonstrate:
+Here you will find examples of how to work with YouTube videos using Python and various APIs. 
 
-- How to download videos and extract audio.
-- How to transcribe audio to text using a speech-to-text API
-- How to extract existing transcripts and translate
+### Part 1: [youtube-demos.ipynb](src/notebooks/youtube-demos.ipynb)
 
-**This is work-in-progress.  Content coming soon!**
+In this notebook I demonstrate:
+
+- A Jupyter notebook that provides a minimum viable product for a YouTube video downloader application.
+- How to quickly setup and use the notebook, including how to run it with zero install effort, in Google Colab.
+- Three different ways to download YouTube videos and extract audio to mp3.
+- Using the Python Speech Recognition library, along with the Google Speech Recognition API, to transcribe mp3 audio into text.
+- Extracting pre-existing transcripts from YouTube videos, and how to translate such transcripts.
+
+### Part 2: [youtube-demos-with-google-ai.ipynb](src/notebooks/youtube-demos-with-google-ai.ipynb)
+
+- Using the Google Video Intelligence API to provide more reliable and more accurate trancription.
+- Using Google Gemini Generative AI to transcribe, translate and summarise video content.
+- How to build your Jupyter notebook so it can run locally, in Google Colab, or in Google Vertex AI Workbench.
 
 ## Future Plan
 
-- Google Speech-to-Text API
-- Google Video Intelligence API
-- Gemini Pro Generative AI
 - Convering to a Streamlit application
 - Hosting on Google Cloud Run
 - Terraform
@@ -30,7 +37,7 @@ If you don't know much about Jupyter notebooks, then I suggest you start with my
 
 ### Running the Jupyter Notebook Locally
 
-#### Method 1 - Use a Python Virtual Env with Notebook Installed
+Here we create a Python virtual environment, install Jupyter notebook to the environment, and then run our notebooks from there.
 
 ```bash
 py -m pip install --upgrade pip
@@ -46,16 +53,4 @@ py -m pip install -r requirements.txt
 ```
 
 Now you can use your venv as your Jupyter kernel.
-
-#### Method 2 - Running Local Jupyter Lab Container
-
-You can use my `docker-compose-scipy-lab.yml` to run a local Docker container running a Jupyter SciPy lab container.
-
-```bash
-# To launch the container
-docker compose -f ./docker-compose-scipy-lab.yml up -d
-
-# To stop it
-docker compose -f ./docker-compose-scipy-lab.yml down
-```
 
