@@ -1,0 +1,7 @@
+streamlit
+python-dotenv
+pytubefix
+youtube_transcript_api
+google-cloud-aiplatform
+google-cloud-logging
+google-cloud-storage
