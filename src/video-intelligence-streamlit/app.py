@@ -1,6 +1,7 @@
 import logging
 import os
 import re
+import textwrap
 from dataclasses import dataclass
 from io import BytesIO
 from typing import Optional
@@ -10,12 +11,10 @@ import streamlit as st
 
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
-import youtube_transcript_api as yt_api
 
 from google.auth import default
 from google.auth.exceptions import DefaultCredentialsError
 from google.api_core.exceptions import ServiceUnavailable
-from google.cloud import storage
 
 import vertexai # Google Cloud Vertex Generative AI SDK for Python
 from vertexai.generative_models import GenerativeModel, Part
@@ -26,8 +25,6 @@ MODEL_NAME = "gemini-1.5-flash-002"
 # Set env vars
 PROJECT_ID = os.environ.get('PROJECT_ID')
 REGION = os.environ.get('REGION')
-BUCKET_NAME = f"{PROJECT_ID}-bucket"
-BUCKET_URI = f"gs://{BUCKET_NAME}"
 
 TEST_VIDEOS = [
     "https://www.youtube.com/watch?v=udRAIF6MOm8",  # Sigrid - Burning Bridges (English)
@@ -85,26 +82,8 @@ def google_adc_auth():
 
     return credentials
 
-def upload_to_gcs(bucket_name :str, src_file: BytesIO, dest_name):
-    """ Upload a file to a GCS bucket. """
-
-    try:
-        storage_client = storage.Client()
-        bucket = storage_client.bucket(bucket_name)
-        
-        blob_name = dest_name 
-        blob = bucket.blob(blob_name)
-        logger.info(f"Uploading BytesIO object to gs://{bucket.name}/{blob_name}")
-        src_file.seek(0)
-        blob.upload_from_file(src_file)
-        return f"gs://{bucket}/{blob_name}" # Return the full GCS URI 
-    except Exception as e:
-        logger.exception(f"Error uploading {src_file} to GCS: {e}")
-    
-    return None
-
 @st.cache_data(ttl=3600)
-def downlaod_yt_video(url: str) -> VideoAudioData:
+def download_yt_video(url: str) -> VideoAudioData:
     logger.info(f"Downloading video {url}")
 
     try:
@@ -152,34 +131,52 @@ def load_models():
 def main():
     logger.debug(f"{PROJECT_ID=}")
     logger.debug(f"{REGION=}")
-    logger.debug(f"{BUCKET_NAME=}")
-    logger.debug(f"{BUCKET_URI=}")
     
-    if st.session_state.get("locations") is None:
+    if st.session_state.get("model") is None:
         logger.debug("Initialising session variables")
-        st.session_state["locations"] = configure_locations(APP_NAME)
         st.session_state["credentials"] = google_adc_auth()
         st.session_state["model"] = load_models()
     else:
         logger.debug("Session variables already initialised")
     
-    locations = st.session_state["locations"]
     credentials = st.session_state["credentials"]
     model = st.session_state["model"]
     
     st.header("Video Intelligence", divider="rainbow")
     
-    if st.button("Download Video"):
+    download_video = st.button("Download Video", key="download_video")
+    if download_video:
         progress_state = st.text('Downloading video and extracting audio...')
-        video_and_audio = downlaod_yt_video(TEST_VIDEOS[0])
-        video_file_uri = upload_to_gcs(BUCKET_NAME, video_and_audio.video, video_and_audio.video_file_name)
-        audio_file_uri = upload_to_gcs(BUCKET_NAME, video_and_audio.audio, video_and_audio.audio_file_name)
+        video_and_audio = download_yt_video(TEST_VIDEOS[0])
+        logger.debug("Adding video_and_audio to session state")
+        st.session_state.video_and_audio = video_and_audio
         progress_state.text('Done!')
+        
+        st.video(video_and_audio.video, format="video/mp4")
 
     try:
-        if st.button("Write story"):
-            response = model.generate_content("Write a story about a silly black and white cat called Mycroft")
-            logger.debug(response.text)
+        transcribe_and_summarise = st.button("Transcribe and Summarise", key="transcribe_and_summarise")
+        if transcribe_and_summarise:
+            logger.debug("Transcribing and summarising button pressed")
+            if st.session_state.get("video_and_audio") is not None:
+                with st.spinner("Asking the model..."):
+                    video_and_audio = st.session_state.video_and_audio
+                    audio = Part.from_data(data=video_and_audio.audio.getvalue(), mime_type="audio/mpeg")
+                    
+                    prompt = textwrap.dedent("""\
+                        In this audio file, please tell me:
+                        - What languages are being sung?
+                        - What are the lyrics? Please show me in the native language, and translated to English.
+                        - What is the meaning of the lyrics?
+                    """)
+                    contents = [prompt, audio] # multimodal input
+
+                    logger.debug(f"Prompt:\n{prompt}")
+                    logger.debug("Asking the model. Please wait...")
+                    response = model.generate_content(contents, stream=False)
+                    st.markdown(response.text)
+            else:
+                st.error("Please download a video first.")
     except ServiceUnavailable as e:
         logger.error(e)
         st.error(f"""Error calling AI service:  
