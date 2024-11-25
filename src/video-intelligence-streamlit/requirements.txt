@@ -1,4 +1,3 @@
 streamlit
 pytubefix
-google-auth
 google-cloud-aiplatform

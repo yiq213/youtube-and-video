@@ -12,8 +12,10 @@ import streamlit as st
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
 
-from google.auth import default
-from google.auth.exceptions import DefaultCredentialsError
+# For local dev, you may need to:
+# gcloud auth login
+# gcloud auth application-default login
+# gcloud auth application-default set-quota-project $PROJECT_ID
 from google.api_core.exceptions import ServiceUnavailable
 
 import vertexai # Google Cloud Vertex Generative AI SDK for Python
@@ -68,20 +70,6 @@ def get_video_id(url: str) -> str:
     """ Return the video ID, which is the part after 'v=' """
     return url.split("v=")[-1]
 
-# For local dev, you may need to:
-# gcloud auth login
-# gcloud auth application-default login
-# gcloud auth application-default set-quota-project $PROJECT_ID
-@st.cache_resource
-def google_adc_auth():
-    logger.debug("Retrieving ADC")
-    try:
-        credentials, _ = default() # Retrieve ADC
-    except DefaultCredentialsError as e:
-        logger.error(e)
-
-    return credentials
-
 @st.cache_data(ttl=3600)
 def download_yt_video(url: str) -> VideoAudioData:
     logger.info(f"Downloading video {url}")
@@ -134,12 +122,10 @@ def main():
     
     if st.session_state.get("model") is None:
         logger.debug("Initialising session variables")
-        st.session_state["credentials"] = google_adc_auth()
         st.session_state["model"] = load_models()
     else:
         logger.debug("Session variables already initialised")
     
-    credentials = st.session_state["credentials"]
     model = st.session_state["model"]
     
     st.header("Video Intelligence", divider="rainbow")
