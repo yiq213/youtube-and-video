@@ -2,6 +2,7 @@ streamlit
 python-dotenv
 pytubefix
 youtube_transcript_api
+google-auth
 google-cloud-aiplatform
 google-cloud-logging
 google-cloud-storage
