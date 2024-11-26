@@ -1,10 +1,18 @@
+""" 
+Streamlit application for processing uploaded videos, or YouTube videos.
+It transcribes audio and - if necessary - translates.
+Makes use of Google Gemini multimodal model for transcription and translation.
+
+For local dev, you may need to set ADC:
+gcloud auth application-default login
+gcloud auth application-default set-quota-project $PROJECT_ID 
+"""
 import logging
 import os
 import re
 import textwrap
 from dataclasses import dataclass
 from io import BytesIO
-from typing import Optional
 import dazbo_commons as dc
 
 import streamlit as st
@@ -12,12 +20,7 @@ import streamlit as st
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
 
-# For local dev, you may need to:
-# gcloud auth login
-# gcloud auth application-default login
-# gcloud auth application-default set-quota-project $PROJECT_ID
 from google.api_core.exceptions import ServiceUnavailable
-
 import vertexai # Google Cloud Vertex Generative AI SDK for Python
 from vertexai.generative_models import GenerativeModel, Part
 
@@ -25,8 +28,11 @@ APP_NAME = "dazbo-vid-intel-streamlit"
 MODEL_NAME = "gemini-1.5-flash-002"
 
 # Set env vars
-PROJECT_ID = os.environ.get('PROJECT_ID')
-REGION = os.environ.get('REGION')
+PROJECT_ID = os.environ.get('PROJECT_ID', None)
+REGION = os.environ.get('REGION', None)
+
+if not REGION and not PROJECT_ID:
+    raise ValueError("Environment variables not properly set.")
 
 TEST_VIDEOS = [
     "https://www.youtube.com/watch?v=udRAIF6MOm8",  # Sigrid - Burning Bridges (English)
@@ -36,12 +42,10 @@ TEST_VIDEOS = [
 ]
 
 @dataclass
-class VideoAudioData():
-    """ Wrap the BytesIO objects and intended filenames for video and audio streams. """
-    video: BytesIO
-    audio: Optional[BytesIO]  # Allow for cases where audio isn't present
-    video_file_name: str
-    audio_file_name: Optional[str] # Match optionality of audio
+class Video():
+    """ Wrap the BytesIO objects and intended filenames. """
+    data: BytesIO
+    name: str
 
 # Configure logging
 if st.session_state.get("logger") is None:
@@ -70,8 +74,14 @@ def get_video_id(url: str) -> str:
     """ Return the video ID, which is the part after 'v=' """
     return url.split("v=")[-1]
 
+
+YOUTUBE_REGEX = r"^https:\/\/www\.youtube\.com\/watch\?v=[\w]*$"
+
+def is_valid_youtube_url(url):
+    return re.match(YOUTUBE_REGEX, url) is not None
+
 @st.cache_data(ttl=3600)
-def download_yt_video(url: str) -> VideoAudioData:
+def download_yt_video(url: str) -> Video:
     logger.info(f"Downloading video {url}")
 
     try:
@@ -87,86 +97,123 @@ def download_yt_video(url: str) -> VideoAudioData:
         logger.info(f"Downloading video as {cleaned}.mp4")
         video_bytes = BytesIO()
         video_stream.stream_to_buffer(video_bytes)
-    
-        logger.info("Creating audio bytes")
-        audio_stream = yt.streams.get_audio_only()
-        audio_bytes = BytesIO()
-        audio_stream.stream_to_buffer(audio_bytes)
-        
         logger.debug("Done")
-        return VideoAudioData(video=video_bytes, 
-                              audio=audio_bytes, 
-                              video_file_name=f"{cleaned}.mp4", 
-                              audio_file_name=f"{cleaned}.m4a"
-        )
-
-    except Exception as e:        
+        return Video(video_bytes,cleaned)
+    except Exception as e:
+        st.error("Error downloading video.")   
         logger.error(f"Error processing URL '{url}'.")
-        logger.debug(f"The cause was: {e}") 
+        logger.error(f"The cause was: {e}") 
     
     return None
 
+@st.cache_data(ttl=3600)
+def upload_video(uploaded_file):
+    file_contents = uploaded_file.read()
+    video_bytes = BytesIO(file_contents)  # Create BytesIO from uploaded file data
+    filename = clean_filename(uploaded_file.name)  # Sanitize the filename
+    video = Video(video_bytes, filename)
+    return video
+
 @st.cache_resource
-def load_models():
+def load_model(model_name: str):
+    """ Load AI model """
     logger.debug("Initialising Vertex AI")    
     vertexai.init(project=PROJECT_ID, location=REGION)
     
-    logger.debug(f"Loading model {MODEL_NAME}")
-    model = GenerativeModel(MODEL_NAME)
-    logger.debug("Model loaded.")
-    return model
+    logger.debug(f"Loading model {model_name}")
+    try:
+        model = GenerativeModel(model_name)
+        logger.debug("Model loaded.")
+        return model
+    except Exception as e:
+        st.error("Error loading model. Aborting.")
+        logger.error(e)
+        raise e
 
 def main():
     logger.debug(f"{PROJECT_ID=}")
     logger.debug(f"{REGION=}")
     
-    if st.session_state.get("model") is None:
-        logger.debug("Initialising session variables")
-        st.session_state["model"] = load_models()
-    else:
-        logger.debug("Session variables already initialised")
-    
-    model = st.session_state["model"]
-    
     st.header("Video Intelligence", divider="rainbow")
     
-    download_video = st.button("Download Video", key="download_video")
-    if download_video:
-        progress_state = st.text('Downloading video and extracting audio...')
-        video_and_audio = download_yt_video(TEST_VIDEOS[0])
-        logger.debug("Adding video_and_audio to session state")
-        st.session_state.video_and_audio = video_and_audio
-        progress_state.text('Done!')
+    video_container = st.container(border=True)
+    with video_container:
+        with st.container(border=True):
+            youtube_url = st.text_input("Enter YouTube URL:", value=TEST_VIDEOS[0])
+            load_yt_btn = st.button("Load video from YouTube", key="load_yt_btn")
         
-        st.video(video_and_audio.video, format="video/mp4")
-
-    try:
-        transcribe_and_summarise = st.button("Transcribe and Summarise", key="transcribe_and_summarise")
-        if transcribe_and_summarise:
-            logger.debug("Transcribing and summarising button pressed")
-            if st.session_state.get("video_and_audio") is not None:
-                with st.spinner("Asking the model..."):
-                    video_and_audio = st.session_state.video_and_audio
-                    audio = Part.from_data(data=video_and_audio.audio.getvalue(), mime_type="audio/mpeg")
-                    
-                    prompt = textwrap.dedent("""\
-                        In this audio file, please tell me:
-                        - What languages are being sung?
-                        - What are the lyrics? Please show me in the native language, and translated to English.
-                        - What is the meaning of the lyrics?
-                    """)
-                    contents = [prompt, audio] # multimodal input
-
-                    logger.debug(f"Prompt:\n{prompt}")
-                    logger.debug("Asking the model. Please wait...")
-                    response = model.generate_content(contents, stream=False)
-                    st.markdown(response.text)
+        with st.container(border=True):
+            uploaded_file = st.file_uploader("Or Upload a Video File:")
+            upload_btn = st.button("Upload video", key="upload_btn")
+        
+        if load_yt_btn:
+            if youtube_url:
+                if is_valid_youtube_url(youtube_url):
+                    progress_state = st.text('Downloading video')
+                    video = download_yt_video(youtube_url)
+                    st.session_state.video = video
+                    progress_state.text('Done!')
+                else:
+                    st.error("URL is not a valid YouTube URL.")
+                    del st.session_state.video
             else:
-                st.error("Please download a video first.")
-    except ServiceUnavailable as e:
-        logger.error(e)
-        st.error(f"""Error calling AI service:  
-                 {e.message}""")
+                logger.warn("Please specify a YouTube video to load.")
 
+        if upload_btn:
+            if uploaded_file:
+                video = upload_video(uploaded_file)
+                st.session_state.video = video
+            else:
+                logger.warn("Please specify a video to load.")
+    
+        if  "video" in st.session_state:
+            video = st.session_state.video
+            st.video(video.data, format="video/mp4")
+        else:
+            st.write("No video downloaded.")
+            
+    response_container = st.container(border=True)
+    with response_container:
+        try:
+            transcribe_and_summarise = st.button("Transcribe and Summarise", key="transcribe_and_summarise")
+            if transcribe_and_summarise: # button pressed
+                    
+                # Lazy instantiation of the model
+                if "model" not in st.session_state:
+                    logger.debug("Initialising session variables")
+                    st.session_state["model"] = load_model(MODEL_NAME)
+                
+                model = st.session_state["model"]
+                
+                logger.debug("Transcribing and summarising button pressed")
+                if "video" in st.session_state:
+                    with st.spinner("Asking the model..."):
+                        video = st.session_state.video
+                        video_data = Part.from_data(data=video.data.getvalue(), mime_type="video/mp4")
+
+                        prompt = textwrap.dedent("""\
+                            In this video, please:
+                            - Transcribe any spoken or sung words.
+                            - If the words are English, write them in English.
+                            - If the words are in another language, write them in the native language, and then show me the English translation.
+                            - If any significant proportion of the words are not English, tell me what the language is.
+                            - Provide a summary of the words, and your interpretation of the meaning.
+                        """)
+                        contents = [prompt, video_data] # multimodal input
+
+                        logger.debug(f"Prompt:\n{prompt}")
+                        logger.debug("Asking the model. Please wait...")
+                        response = model.generate_content(contents, stream=False)
+                        with st.chat_message("ai"):
+                            st.markdown(response.text)
+                else:
+                    st.error("Please download a video first.")
+        except ServiceUnavailable as e:
+            logger.error(e)
+            st.error("Error calling AI service. Please wait a few seconds and try again.")
+        except Exception as e:
+            logger.error(e)
+            st.error(e)
+            
 if __name__ == "__main__":
     main()
