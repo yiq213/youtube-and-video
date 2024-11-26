@@ -134,7 +134,7 @@ def main():
     logger.debug(f"{PROJECT_ID=}")
     logger.debug(f"{REGION=}")
     
-    st.header("Video Intelligence", divider="rainbow")
+    st.header("Dazbo's Video Intelligence", divider="rainbow")
     
     video_container = st.container(border=True)
     with video_container:
@@ -176,6 +176,7 @@ def main():
     response_container = st.container(border=True)
     with response_container:
         try:
+            # TODO: Let's safeguard the video length
             transcribe_and_summarise = st.button("Transcribe and Summarise", key="transcribe_and_summarise")
             if transcribe_and_summarise: # button pressed
                     
@@ -188,7 +189,7 @@ def main():
                 
                 logger.debug("Transcribing and summarising button pressed")
                 if "video" in st.session_state:
-                    with st.spinner("Asking the model..."):
+                    with st.spinner("Asking the AI..."):
                         video = st.session_state.video
                         video_data = Part.from_data(data=video.data.getvalue(), mime_type="video/mp4")
 
