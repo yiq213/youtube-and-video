@@ -147,6 +147,7 @@ def main():
             upload_btn = st.button("Upload video", key="upload_btn")
         
         if load_yt_btn:
+            # TODO: Display some metadata on yt or local vid load
             if youtube_url:
                 if is_valid_youtube_url(youtube_url):
                     progress_state = st.text('Downloading video')
