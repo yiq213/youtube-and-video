@@ -26,6 +26,7 @@ from vertexai.generative_models import GenerativeModel, Part
 
 APP_NAME = "dazbo-vid-intel-streamlit"
 MODEL_NAME = "gemini-1.5-flash-002"
+YT_REGEX = re.compile(r"^https:\/\/www\.youtube\.com\/watch\?v=[\w]*$")
 
 # Set env vars
 PROJECT_ID = os.environ.get('PROJECT_ID', None)
@@ -64,21 +65,21 @@ def configure_locations(app_name: str):
         
     return locations
 
+@st.cache_data
 def clean_filename(filename):
     """ Create a clean filename by removing unallowed characters. """
     pattern = r'[^a-zA-Z0-9._\s-]'
     cleaned_name = re.sub(pattern, '_', filename).replace("_ _", "_").replace("__", "_")
     return  cleaned_name
 
+@st.cache_data
 def get_video_id(url: str) -> str:
     """ Return the video ID, which is the part after 'v=' """
     return url.split("v=")[-1]
 
-
-YOUTUBE_REGEX = r"^https:\/\/www\.youtube\.com\/watch\?v=[\w]*$"
-
+@st.cache_data
 def is_valid_youtube_url(url):
-    return re.match(YOUTUBE_REGEX, url) is not None
+    return YT_REGEX.match(url) is not None
 
 @st.cache_data(ttl=3600)
 def download_yt_video(url: str) -> Video:
