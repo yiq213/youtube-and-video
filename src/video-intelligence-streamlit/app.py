@@ -28,6 +28,7 @@ from video_utils import (
 
 APP_NAME = "dazbo-vid-intel-streamlit"
 MODEL_NAME = "gemini-1.5-flash-002"
+MAX_VIDEO_SIZE = 40 # MB
 
 # Set env vars
 PROJECT_ID = os.environ.get('PROJECT_ID', None)
@@ -76,10 +77,16 @@ def load_model(model_name: str):
         logger.error(e)
         raise e
 
+def bytes_to_mb(bytes_value):
+    """Converts bytes to megabytes, rounded to 1 decimal place."""
+    mb = bytes_value / (1024 * 1024)
+    return round(mb, 1)
+
 def main():
     logger.debug(f"{PROJECT_ID=}")
     logger.debug(f"{REGION=}")
-    
+
+    st.set_page_config(page_title="Dazbo's Video Intelligence", page_icon="🎥")    
     st.header("Dazbo's Video Intelligence", divider="rainbow")
     
     video_container = st.container(border=True)
@@ -94,7 +101,6 @@ def main():
             upload_btn = st.button("Upload video", key="upload_btn")
         
         if load_yt_btn:
-            # TODO: Display some metadata on yt or local vid load
             if youtube_url:
                 if is_valid_youtube_url(youtube_url):
                     with download_spinner:
@@ -102,6 +108,7 @@ def main():
                             logger.info(f"Downloading yt video {youtube_url}")
                             video = download_yt_video(youtube_url)
                             st.session_state.video = video
+                            st.session_state.video_size = bytes_to_mb(video.data.getbuffer().nbytes)
                         except DownloadError as e:
                             st.error(str(e))   
                             logger.error(f"Error processing URL '{e.url}'.")
@@ -109,18 +116,23 @@ def main():
                     st.error("URL is not a valid YouTube URL.")
                     del st.session_state.video
             else:
-                logger.warn("Please specify a YouTube video to load.")
+                st.warning("Please specify a YouTube video to load.")
 
         if upload_btn:
             if uploaded_file:
                 logger.info(f"Uploading from local file {uploaded_file}")
                 video = upload_video_bytesio(uploaded_file)
                 st.session_state.video = video
+                st.session_state.video_size = bytes_to_mb(uploaded_file.size)
             else:
-                logger.warn("Please specify a video to load.")
+                st.warning("Please specify a video to load.")
     
         if  "video" in st.session_state:
             video = st.session_state.video
+            video_size = st.session_state.video_size
+            
+            st.write(f"Title: {video.name}")
+            st.write(f"Size: {video_size}MB")
             st.video(video.data, format="video/mp4")
         else:
             st.write("No video loaded.")
@@ -128,8 +140,8 @@ def main():
     response_container = st.container(border=True)
     with response_container:
         try:
-            # TODO: Let's safeguard the video length
             transcribe_and_summarise = st.button("Transcribe and Summarise", key="transcribe_and_summarise")
+            
             if transcribe_and_summarise: # button pressed
                     
                 # Lazy instantiation of the model
@@ -139,8 +151,11 @@ def main():
                 model = st.session_state["model"]
                 
                 logger.debug("Transcribing and summarising button pressed")
-                if "video" in st.session_state:
-                    with st.spinner("Asking the AI..."):
+                if "video_size" in st.session_state and st.session_state.video_size > MAX_VIDEO_SIZE:
+                    st.warning("This video is quite large. I'm not going to process that!")
+                    logger.info(f"{video.name} is a bit big: {video_size}")
+                elif "video" in st.session_state:                    
+                    with st.spinner("Asking the AI. This could take several seconds..."):
                         video = st.session_state.video
                         video_data = Part.from_data(data=video.data.getvalue(), mime_type="video/mp4")
 
@@ -152,19 +167,27 @@ def main():
                             - If any significant proportion of the words are not English, tell me what the language is.
                             - If this is a song, please provide a summary of the words, and your interpretation of the meaning.
                             - If there is enough content in the transcription to make it worthwhile, please provide topic titles and topic summaries.
+                            Render the response in markdown. 
                         """)
                         contents = [prompt, video_data] # multimodal input
 
                         logger.debug(f"Prompt:\n{prompt}")
                         logger.debug("Asking the model. Please wait...")
                         response = model.generate_content(contents, stream=False)
-                        with st.chat_message("ai"):
-                            st.markdown(response.text)
+                        st.session_state.ai_response = response.text
+                        
                 else:
                     st.error("Please download a video first.")
+                    
+            chat_msg = st.chat_message("ai")
+            
+            if "ai_response" in st.session_state:
+                with chat_msg:
+                    st.markdown(st.session_state.ai_response)
         except ServiceUnavailable as e:
             logger.error(e)
-            st.error("Error calling AI service. Please wait a few seconds and try again.")
+            st.error(f"""Error calling AI service. Please wait a few seconds and try again.  
+                     {e.message}""")
         except Exception as e:
             logger.error(e)
             st.error(e)
