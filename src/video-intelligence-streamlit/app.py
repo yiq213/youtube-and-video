@@ -9,24 +9,25 @@ gcloud auth application-default set-quota-project $PROJECT_ID
 """
 import logging
 import os
-import re
 import textwrap
-from dataclasses import dataclass
-from io import BytesIO
 import dazbo_commons as dc
 
 import streamlit as st
-
-from pytubefix import YouTube
-from pytubefix.cli import on_progress
 
 from google.api_core.exceptions import ServiceUnavailable
 import vertexai # Google Cloud Vertex Generative AI SDK for Python
 from vertexai.generative_models import GenerativeModel, Part
 
+from video_utils import ( 
+    download_yt_video,
+    DownloadError,
+    is_valid_youtube_url,
+    upload_video_bytesio,
+#    get_video_id
+)
+
 APP_NAME = "dazbo-vid-intel-streamlit"
 MODEL_NAME = "gemini-1.5-flash-002"
-YT_REGEX = re.compile(r"^https:\/\/www\.youtube\.com\/watch\?v=[\w]*$")
 
 # Set env vars
 PROJECT_ID = os.environ.get('PROJECT_ID', None)
@@ -41,12 +42,6 @@ TEST_VIDEOS = [
     "https://www.youtube.com/watch?v=nLgHNu2N3JU",  # Jim Carey - Motivational speech (English)
     "https://www.youtube.com/watch?v=d4N82wPpdg8",  # Jerry Heil & Alyona Alyona - Teresa & Maria (Ukrainian)
 ]
-
-@dataclass
-class Video():
-    """ Wrap the BytesIO objects and intended filenames. """
-    data: BytesIO
-    name: str
 
 # Configure logging
 if st.session_state.get("logger") is None:
@@ -64,56 +59,6 @@ def configure_locations(app_name: str):
         logger.debug(f"{attribute}: {value}")
         
     return locations
-
-@st.cache_data
-def clean_filename(filename):
-    """ Create a clean filename by removing unallowed characters. """
-    pattern = r'[^a-zA-Z0-9._\s-]'
-    cleaned_name = re.sub(pattern, '_', filename).replace("_ _", "_").replace("__", "_")
-    return  cleaned_name
-
-@st.cache_data
-def get_video_id(url: str) -> str:
-    """ Return the video ID, which is the part after 'v=' """
-    return url.split("v=")[-1]
-
-@st.cache_data
-def is_valid_youtube_url(url):
-    return YT_REGEX.match(url) is not None
-
-@st.cache_data(ttl=3600)
-def download_yt_video(url: str) -> Video:
-    logger.info(f"Downloading video {url}")
-
-    try:
-        yt = YouTube(url, on_progress_callback=on_progress)
-        video_stream = yt.streams.get_highest_resolution()
-        if not video_stream:
-            raise Exception("Stream not available.")
-        
-        # YouTube resource titles may contain special characters which 
-        # can't be used when saving the file. So we need to clean the filename.
-        cleaned = clean_filename(yt.title)
-        
-        logger.info(f"Downloading video as {cleaned}.mp4")
-        video_bytes = BytesIO()
-        video_stream.stream_to_buffer(video_bytes)
-        logger.debug("Done")
-        return Video(video_bytes,cleaned)
-    except Exception as e:
-        st.error("Error downloading video.")   
-        logger.error(f"Error processing URL '{url}'.")
-        logger.error(f"The cause was: {e}") 
-    
-    return None
-
-@st.cache_data(ttl=3600)
-def upload_video(uploaded_file):
-    file_contents = uploaded_file.read()
-    video_bytes = BytesIO(file_contents)  # Create BytesIO from uploaded file data
-    filename = clean_filename(uploaded_file.name)  # Sanitize the filename
-    video = Video(video_bytes, filename)
-    return video
 
 @st.cache_resource
 def load_model(model_name: str):
@@ -142,6 +87,7 @@ def main():
         with st.container(border=True):
             youtube_url = st.text_input("Enter YouTube URL:", value=TEST_VIDEOS[0])
             load_yt_btn = st.button("Load video from YouTube", key="load_yt_btn")
+            download_spinner = st.spinner("Downloading video...")
         
         with st.container(border=True):
             uploaded_file = st.file_uploader("Or Upload a Video File:")
@@ -151,10 +97,14 @@ def main():
             # TODO: Display some metadata on yt or local vid load
             if youtube_url:
                 if is_valid_youtube_url(youtube_url):
-                    progress_state = st.text('Downloading video')
-                    video = download_yt_video(youtube_url)
-                    st.session_state.video = video
-                    progress_state.text('Done!')
+                    with download_spinner:
+                        try:
+                            logger.info(f"Downloading yt video {youtube_url}")
+                            video = download_yt_video(youtube_url)
+                            st.session_state.video = video
+                        except DownloadError as e:
+                            st.error(str(e))   
+                            logger.error(f"Error processing URL '{e.url}'.")
                 else:
                     st.error("URL is not a valid YouTube URL.")
                     del st.session_state.video
@@ -163,7 +113,8 @@ def main():
 
         if upload_btn:
             if uploaded_file:
-                video = upload_video(uploaded_file)
+                logger.info(f"Uploading from local file {uploaded_file}")
+                video = upload_video_bytesio(uploaded_file)
                 st.session_state.video = video
             else:
                 logger.warn("Please specify a video to load.")
@@ -172,7 +123,7 @@ def main():
             video = st.session_state.video
             st.video(video.data, format="video/mp4")
         else:
-            st.write("No video downloaded.")
+            st.write("No video loaded.")
             
     response_container = st.container(border=True)
     with response_container:
@@ -183,7 +134,6 @@ def main():
                     
                 # Lazy instantiation of the model
                 if "model" not in st.session_state:
-                    logger.debug("Initialising session variables")
                     st.session_state["model"] = load_model(MODEL_NAME)
                 
                 model = st.session_state["model"]
@@ -200,7 +150,8 @@ def main():
                             - If the words are English, write them in English.
                             - If the words are in another language, write them in the native language, and then show me the English translation.
                             - If any significant proportion of the words are not English, tell me what the language is.
-                            - Provide a summary of the words, and your interpretation of the meaning.
+                            - If this is a song, please provide a summary of the words, and your interpretation of the meaning.
+                            - If there is enough content in the transcription to make it worthwhile, please provide topic titles and topic summaries.
                         """)
                         contents = [prompt, video_data] # multimodal input
 
