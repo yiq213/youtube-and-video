@@ -11,6 +11,7 @@ import logging
 import os
 import textwrap
 import dazbo_commons as dc
+import mimetypes
 
 import streamlit as st
 
@@ -120,11 +121,15 @@ def main():
 
         if upload_btn: # upload button pressed
             if uploaded_file:
-                logger.info(f"Uploading from local file {uploaded_file.name}")
-                video = upload_video_bytesio(uploaded_file)
-                st.session_state.video = video
-                st.session_state.video_size = bytes_to_mb(uploaded_file.size)
-                st.session_state.new = True
+                mime_type = mimetypes.guess_type(uploaded_file.name)[0]
+                if mime_type and mime_type.startswith("video/"):
+                    logger.info(f"Uploading from local file {uploaded_file.name}")
+                    video = upload_video_bytesio(uploaded_file)
+                    st.session_state.video = video
+                    st.session_state.video_size = bytes_to_mb(uploaded_file.size)
+                    st.session_state.new = True
+                else:
+                    st.error("Uploaded file is not a video.")
             else:
                 st.warning("Please specify a video to load.")
     
@@ -141,7 +146,8 @@ def main():
     response_container = st.container(border=True)
     with response_container:
         try:
-            transcribe_and_summarise = st.button("Transcribe and Summarise", key="transcribe_and_summarise")
+            transcribe_and_summarise = st.button("Transcribe and Summarise", 
+                                                 key="transcribe_and_summarise")
             
             if transcribe_and_summarise: # button pressed                                   
                 # Lazy instantiation of the model
