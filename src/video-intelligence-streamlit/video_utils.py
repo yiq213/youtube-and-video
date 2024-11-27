@@ -57,7 +57,7 @@ def download_yt_video(url: str) -> Video:
         raise DownloadError(f"Download error: {e}", url=url) from e
 
 @st.cache_data(ttl=3600)
-def upload_video_bytesio(uploaded_file):
+def upload_video_bytesio(uploaded_file) -> Video:
     file_contents = uploaded_file.read()
     video_bytes = BytesIO(file_contents)  # Create BytesIO from uploaded file data
     filename = clean_filename(uploaded_file.name)  # Sanitize the filename

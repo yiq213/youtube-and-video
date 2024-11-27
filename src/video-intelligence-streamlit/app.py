@@ -34,7 +34,7 @@ MAX_VIDEO_SIZE = 40 # MB
 PROJECT_ID = os.environ.get('PROJECT_ID', None)
 REGION = os.environ.get('REGION', None)
 
-if not REGION and not PROJECT_ID:
+if not REGION or not PROJECT_ID:
     raise ValueError("Environment variables not properly set.")
 
 TEST_VIDEOS = [
@@ -109,21 +109,22 @@ def main():
                             video = download_yt_video(youtube_url)
                             st.session_state.video = video
                             st.session_state.video_size = bytes_to_mb(video.data.getbuffer().nbytes)
+                            st.session_state.new = True
                         except DownloadError as e:
                             st.error(str(e))   
                             logger.error(f"Error processing URL '{e.url}'.")
                 else:
                     st.error("URL is not a valid YouTube URL.")
-                    del st.session_state.video
             else:
                 st.warning("Please specify a YouTube video to load.")
 
-        if upload_btn:
+        if upload_btn: # upload button pressed
             if uploaded_file:
-                logger.info(f"Uploading from local file {uploaded_file}")
+                logger.info(f"Uploading from local file {uploaded_file.name}")
                 video = upload_video_bytesio(uploaded_file)
                 st.session_state.video = video
                 st.session_state.video_size = bytes_to_mb(uploaded_file.size)
+                st.session_state.new = True
             else:
                 st.warning("Please specify a video to load.")
     
@@ -142,8 +143,7 @@ def main():
         try:
             transcribe_and_summarise = st.button("Transcribe and Summarise", key="transcribe_and_summarise")
             
-            if transcribe_and_summarise: # button pressed
-                    
+            if transcribe_and_summarise: # button pressed                                   
                 # Lazy instantiation of the model
                 if "model" not in st.session_state:
                     st.session_state["model"] = load_model(MODEL_NAME)
@@ -154,9 +154,10 @@ def main():
                 if "video_size" in st.session_state and st.session_state.video_size > MAX_VIDEO_SIZE:
                     st.warning("This video is quite large. I'm not going to process that!")
                     logger.info(f"{video.name} is a bit big: {video_size}")
-                elif "video" in st.session_state:                    
+                elif "video" in st.session_state and st.session_state.get("new", False): # new video?
+                    video = st.session_state.video                  
                     with st.spinner("Asking the AI. This could take several seconds..."):
-                        video = st.session_state.video
+                        # video = st.session_state.video
                         video_data = Part.from_data(data=video.data.getvalue(), mime_type="video/mp4")
 
                         prompt = textwrap.dedent("""\
@@ -175,9 +176,13 @@ def main():
                         logger.debug("Asking the model. Please wait...")
                         response = model.generate_content(contents, stream=False)
                         st.session_state.ai_response = response.text
-                        
+                        del st.session_state.new
                 else:
-                    st.error("Please download a video first.")
+                    if not st.session_state.get("new", False):
+                        err_msg = "Please load a new video before transcribing"
+                    else:
+                        err_msg = "Please load a video before transcribing"
+                    st.error(err_msg)
                     
             chat_msg = st.chat_message("ai")
             
