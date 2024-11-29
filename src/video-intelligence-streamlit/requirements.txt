@@ -1,3 +1,5 @@
 streamlit
 pytubefix
+python-dotenv
+dazbo-commons
 google-cloud-aiplatform

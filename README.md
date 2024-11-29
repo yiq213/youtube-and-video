@@ -20,11 +20,11 @@ In this notebook I demonstrate:
 - Using Google Gemini Generative AI to transcribe, translate and summarise video content.
 - How to build your Jupyter notebook so it can run locally, in Google Colab, or in Google Vertex AI Workbench.
 
-## Future Plan
+### Part 3: [video-intelligence-streamlit](src/video-intelligence-streamlit/)
 
-- Convering to a Streamlit application
-- Hosting on Google Cloud Run
-- Terraform
+- Provide a UI in the form of a Streamlit application
+- Containerise the application using Docker
+- Host the application on Google Cloud Run
 
 ## Overview of Jupyter Notebooks
 

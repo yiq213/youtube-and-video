@@ -10,13 +10,13 @@ gcloud auth application-default set-quota-project $PROJECT_ID
 import logging
 import os
 import textwrap
-import dazbo_commons as dc
 import mimetypes
+import dazbo_commons as dc
 
 import streamlit as st
 
 from google.api_core.exceptions import ServiceUnavailable
-import vertexai # Google Cloud Vertex Generative AI SDK for Python
+import vertexai
 from vertexai.generative_models import GenerativeModel, Part
 
 from video_utils import ( 
@@ -24,7 +24,6 @@ from video_utils import (
     DownloadError,
     is_valid_youtube_url,
     upload_video_bytesio,
-#    get_video_id
 )
 
 APP_NAME = "dazbo-vid-intel-streamlit"
@@ -34,6 +33,8 @@ MAX_VIDEO_SIZE = 40 # MB
 # Set env vars
 PROJECT_ID = os.environ.get('PROJECT_ID', None)
 REGION = os.environ.get('REGION', None)
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper() # default to INFO if not set
+LOG_LEVEL_NUM = getattr(logging, LOG_LEVEL, logging.INFO) # default to INFO if bad var
 
 if not REGION or not PROJECT_ID:
     raise ValueError("Environment variables not properly set.")
@@ -46,21 +47,13 @@ TEST_VIDEOS = [
 ]
 
 # Configure logging
-if st.session_state.get("logger") is None:
+if "logger" not in st.session_state:
     st.session_state["logger"] = dc.retrieve_console_logger(APP_NAME)
 
 logger = st.session_state["logger"]
-logger.setLevel(logging.DEBUG)
+logger.setLevel(LOG_LEVEL_NUM)
 logger.info("Logger initialised.")
 logger.debug("DEBUG level logging enabled.")
-
-@st.cache_data(ttl=3600)
-def configure_locations(app_name: str):
-    locations = dc.get_locations(app_name)
-    for attribute, value in vars(locations).items():
-        logger.debug(f"{attribute}: {value}")
-        
-    return locations
 
 @st.cache_resource
 def load_model(model_name: str):
@@ -156,7 +149,6 @@ def main():
                 
                 model = st.session_state["model"]
                 
-                logger.debug("Transcribing and summarising button pressed")
                 if "video_size" in st.session_state and st.session_state.video_size > MAX_VIDEO_SIZE:
                     st.warning("This video is quite large. I'm not going to process that!")
                     logger.info(f"{video.name} is a bit big: {video_size}")
@@ -174,11 +166,10 @@ def main():
                             - If any significant proportion of the words are not English, tell me what the language is.
                             - If this is a song, please provide a summary of the words, and your interpretation of the meaning.
                             - If there is enough content in the transcription to make it worthwhile, please provide topic titles and topic summaries.
-                            Render the response in markdown. 
+                            Render the response in markdown. Please don't include a preamble phrase, such as "Certainly, here is your response".
                         """)
                         contents = [prompt, video_data] # multimodal input
 
-                        logger.debug(f"Prompt:\n{prompt}")
                         logger.debug("Asking the model. Please wait...")
                         response = model.generate_content(contents, stream=False)
                         st.session_state.ai_response = response.text
