@@ -5,8 +5,14 @@
 For lcoal dev, always set these variables:
 
 ```bash
+# Set these manually...
 export PROJECT_ID='<Your Google Cloud Project ID>'
 export REGION='<your region>'
+
+# Or load from .env
+source ../../.env
+
+export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 
 export LOG_LEVEL='DEBUG'
 export VERSION="0.1"
@@ -39,7 +45,7 @@ gcloud services enable \
 
 # Allow service account to access GCS Cloud Build bucket
 gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:608831385073-compute@developer.gserviceaccount.com" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/storage.admin"
 ```
 
