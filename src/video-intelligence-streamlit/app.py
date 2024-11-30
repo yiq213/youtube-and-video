@@ -26,18 +26,11 @@ from video_utils import (
     upload_video_bytesio,
 )
 
+st.set_page_config(page_title="Dazbo's Video Intelligence", page_icon="🎥")    
+
 APP_NAME = "dazbo-vid-intel-streamlit"
 MODEL_NAME = "gemini-1.5-flash-002"
 MAX_VIDEO_SIZE = 40 # MB
-
-# Set env vars
-PROJECT_ID = os.environ.get('PROJECT_ID', None)
-REGION = os.environ.get('REGION', None)
-LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO').upper() # default to INFO if not set
-LOG_LEVEL_NUM = getattr(logging, LOG_LEVEL, logging.INFO) # default to INFO if bad var
-
-if not REGION or not PROJECT_ID:
-    raise ValueError("Environment variables not properly set.")
 
 TEST_VIDEOS = [
     "https://www.youtube.com/watch?v=udRAIF6MOm8",  # Sigrid - Burning Bridges (English)
@@ -46,20 +39,41 @@ TEST_VIDEOS = [
     "https://www.youtube.com/watch?v=d4N82wPpdg8",  # Jerry Heil & Alyona Alyona - Teresa & Maria (Ukrainian)
 ]
 
-# Configure logging
-if "logger" not in st.session_state:
-    st.session_state["logger"] = dc.retrieve_console_logger(APP_NAME)
+@st.cache_data
+def retrieve_env_vars():
+    """ Retrieve env vars. They could be existing env vars, defined in .env, or defined in .streamlit/config.tom """
+    gcp_project_id = os.environ.get('PROJECT_ID', None)
+    gcp_region = os.environ.get('REGION', None)
+    logging_level = os.environ.get('LOG_LEVEL', 'INFO').upper() # default to INFO if not set
 
-logger = st.session_state["logger"]
-logger.setLevel(LOG_LEVEL_NUM)
-logger.info("Logger initialised.")
-logger.debug("DEBUG level logging enabled.")
+    if not gcp_region or not gcp_project_id:
+        raise ValueError("Environment variables not properly set.")
+    
+    return gcp_project_id, gcp_region, logging_level
+
+project_id, region, log_level = retrieve_env_vars()
+
+@st.cache_resource
+def initialise_logger(app_name: str, logging_level: str):
+    retrieved_logger = dc.retrieve_console_logger(app_name)
+    retrieved_logger.info("Logger initialised.")
+    log_level_num = getattr(logging, logging_level, logging.INFO) # default to INFO if bad var
+    retrieved_logger.setLevel(log_level_num)    
+    retrieved_logger.debug("DEBUG level logging enabled.")
+    
+    # Leverage st.cache_resource so that we only show these once
+    retrieved_logger.debug(f"{project_id=}")
+    retrieved_logger.debug(f"{region=}")
+    
+    return retrieved_logger
+    
+logger = initialise_logger(APP_NAME, log_level)
 
 @st.cache_resource
 def load_model(model_name: str):
     """ Load AI model """
     logger.debug("Initialising Vertex AI")    
-    vertexai.init(project=PROJECT_ID, location=REGION)
+    vertexai.init(project=project_id, location=region)
     
     logger.debug(f"Loading model {model_name}")
     try:
@@ -77,10 +91,6 @@ def bytes_to_mb(bytes_value):
     return round(mb, 1)
 
 def main():
-    logger.debug(f"{PROJECT_ID=}")
-    logger.debug(f"{REGION=}")
-
-    st.set_page_config(page_title="Dazbo's Video Intelligence", page_icon="🎥")    
     st.header("Dazbo's Video Intelligence", divider="rainbow")
     
     video_container = st.container(border=True)

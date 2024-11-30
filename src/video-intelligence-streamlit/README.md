@@ -2,7 +2,7 @@
 
 ## Every Session
 
-For lcoal dev, always set these variables:
+For local dev, always set these variables:
 
 ```bash
 # Set these manually...
@@ -18,8 +18,8 @@ export LOG_LEVEL='DEBUG'
 export VERSION="0.1"
 export REPO=video-intelligence
 export SERVICE_NAME=video-intelligence
-export CLOUD_RUN_INVOKER_SA=<svc_account>
-export CLOUD_RUN_INVOKER_SA_DISPLAY="Video Intelligence Invoker SA"
+export CLOUD_RUN_INVOKER_SA="video-intelligence-invoker-sa"
+export CLOUD_RUN_INVOKER_SA_EMAIL="$CLOUD_RUN_INVOKER_SA@$PROJECT_ID.iam.gserviceaccount.com"
 
 # Check we're in the correct project
 gcloud config list project
@@ -64,10 +64,7 @@ pip install -r requirements.txt
 
 ```bash
 # Local streamlit app
-streamlit run app.py \
-  --browser.serverAddress=localhost \
-  --server.enableCORS=false \
-  --server.enableXsrfProtection=false
+streamlit run app.py --browser.serverAddress=localhost
 ```
 
 ### Running in a Local Container
@@ -129,8 +126,7 @@ This time, the service will require authentication. It will require a service ac
 gcloud run services delete $SERVICE_NAME --region $REGION
 
 # Create the SA
-gcloud iam service-accounts create $CLOUD_RUN_INVOKER_SA \
-  --display-name "${CLOUD_RUN_INVOKER_SA_DISPLAY}"
+gcloud iam service-accounts create $CLOUD_RUN_INVOKER_SA
 
 # Deploy to Cloud Run - this takes a couple of minutes
 gcloud run deploy "$SERVICE_NAME" \
