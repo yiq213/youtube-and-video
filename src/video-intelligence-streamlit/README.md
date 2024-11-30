@@ -1,13 +1,34 @@
 # Guidance for Running and Deploying the Video Intelligence Streamlit Application
 
+## Every Session
+
+For lcoal dev, always set these variables:
+
 ```bash
 export PROJECT_ID='<Your Google Cloud Project ID>'
 export REGION='<your region>'
+
 export LOG_LEVEL='DEBUG'
 export VERSION="0.1"
 export REPO=video-intelligence
 export SERVICE_NAME=video-intelligence
+export CLOUD_RUN_INVOKER_SA=<svc_account>
+export CLOUD_RUN_INVOKER_SA_DISPLAY="Video Intelligence Invoker SA"
 
+# Check we're in the correct project
+gcloud config list project
+gcloud config set project $PROJECT_ID
+
+gcloud auth login # authenticate yourself to gcloud
+
+# setup ADC so any locally running application can access Google APIs
+# Note that credentials will be saved to ~/.config/gcloud/application_default_credentials.json
+gcloud auth application-default login
+```
+
+## One-Time Google Cloud Setup
+
+```bash
 # Enable APIs
 gcloud services enable \
   cloudbuild.googleapis.com \
@@ -20,14 +41,20 @@ gcloud services enable \
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:608831385073-compute@developer.gserviceaccount.com" \
   --role="roles/storage.admin"
+```
 
+## Running and Testing the Application Locally
+
+### Per-Environment Setup
+
+```
 # Setup Python environment and install dependencies
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-To run and test the application locally:
+### Running Streamlit App
 
 ```bash
 # Local streamlit app
@@ -35,7 +62,11 @@ streamlit run app.py \
   --browser.serverAddress=localhost \
   --server.enableCORS=false \
   --server.enableXsrfProtection=false
+```
 
+### Running in a Local Container
+
+```bash
 # To build as a container image
 docker build -t $SERVICE_NAME:$VERSION .
 
@@ -50,7 +81,9 @@ docker run --rm -p 8080:8080 \
    $SERVICE_NAME:$VERSION
 ```
 
-To upload to Google Artifact Registry:
+## Running in Google Cloud
+
+### Build and Push to Google Artifact Registry:
 
 ```bash
 # Create a GAR repo
@@ -65,7 +98,9 @@ gcloud builds submit \
   --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION"
 ```
 
-To deploy to Cloud Run:
+### Deploy to Cloud Run
+
+Public service with no authentication:
 
 ```bash
 # Deploy to Cloud Run - this takes a couple of minutes
@@ -77,4 +112,37 @@ gcloud run deploy "$SERVICE_NAME" \
   --platform=managed  \
   --project=$PROJECT_ID \
   --set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$REGION,LOG_LEVEL=DEBUG
+
+  APP_URL=$(gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --format="value(status.address.url)")
+  ```
+
+This time, the service will require authentication. It will require a service account that is authorised.
+
+```bash
+# Delete the existing service
+gcloud run services delete $SERVICE_NAME --region $REGION
+
+# Create the SA
+gcloud iam service-accounts create $CLOUD_RUN_INVOKER_SA \
+  --display-name "${CLOUD_RUN_INVOKER_SA_DISPLAY}"
+
+# Deploy to Cloud Run - this takes a couple of minutes
+gcloud run deploy "$SERVICE_NAME" \
+  --port=8080 \
+  --image="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME" \
+  --no-allow-unauthenticated \
+  --region=$REGION \
+  --platform=managed  \
+  --project=$PROJECT_ID \
+  --set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$REGION,LOG_LEVEL=DEBUG
+
+  APP_URL=$(gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --format="value(status.address.url)")
+
+# Assign the Invoker Service SA as a principal on the target service,
+# i.e. the Cloud Run service
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+  --member=serviceAccount:$CLOUD_RUN_INVOKER_SA@$PROJECT_ID.iam.gserviceaccount.com \
+  --role=roles/run.invoker \
+  --region $REGION \
+  --platform managed
   ```
