@@ -11,7 +11,6 @@ import logging
 import os
 import textwrap
 import mimetypes
-import dazbo_commons as dc
 
 import streamlit as st
 
@@ -55,10 +54,22 @@ project_id, region, log_level = retrieve_env_vars()
 
 @st.cache_resource
 def initialise_logger(app_name: str, logging_level: str):
-    retrieved_logger = dc.retrieve_console_logger(app_name)
-    retrieved_logger.info("Logger initialised.")
+    retrieved_logger = logging.getLogger(app_name) 
     log_level_num = getattr(logging, logging_level, logging.INFO) # default to INFO if bad var
-    retrieved_logger.setLevel(log_level_num)    
+    retrieved_logger.setLevel(log_level_num)
+    
+    handler = logging.StreamHandler()
+    formatter = logging.Formatter(fmt='%(asctime)s.%(msecs)03d:%(name)s - %(levelname)s: %(message)s',
+                                  datefmt='%H:%M:%S')
+    handler.setFormatter(formatter)
+    
+    # Important to prevent duplicate log entries
+    if retrieved_logger.hasHandlers():
+        retrieved_logger.handlers.clear()
+
+    retrieved_logger.addHandler(handler) # Attach the StreamHandler
+
+    retrieved_logger.info("Logger initialised.")
     retrieved_logger.debug("DEBUG level logging enabled.")
     
     # Leverage st.cache_resource so that we only show these once
