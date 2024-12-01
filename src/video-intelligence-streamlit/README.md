@@ -5,6 +5,12 @@
 For local dev, always set these variables:
 
 ```bash
+gcloud auth login # authenticate yourself to gcloud
+
+# setup ADC so any locally running application can access Google APIs
+# Note that credentials will be saved to ~/.config/gcloud/application_default_credentials.json
+gcloud auth application-default login
+
 # Set these manually...
 export PROJECT_ID='<Your Google Cloud Project ID>'
 export REGION='<your region>'
@@ -24,17 +30,13 @@ export CLOUD_RUN_INVOKER_SA_EMAIL="$CLOUD_RUN_INVOKER_SA@$PROJECT_ID.iam.gservic
 # Check we're in the correct project
 gcloud config list project
 gcloud config set project $PROJECT_ID
-
-gcloud auth login # authenticate yourself to gcloud
-
-# setup ADC so any locally running application can access Google APIs
-# Note that credentials will be saved to ~/.config/gcloud/application_default_credentials.json
-gcloud auth application-default login
 ```
 
 ## One-Time Google Cloud Setup
 
 ```bash
+export MY_ORG=<enter your org domain>
+
 # Enable APIs
 gcloud services enable \
   cloudbuild.googleapis.com \
@@ -43,10 +45,30 @@ gcloud services enable \
   storage-component.googleapis.com \
   aiplatform.googleapis.com
 
-# Allow service account to access GCS Cloud Build bucket
+# Allow default service account to access GCS Cloud Build bucket
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/storage.admin"
+
+# Grant the required role to the principal
+# that will attach the service account to other resources.
+# Here we assume your developer account is a member of the gcp-devops group.
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="group:gcp-devops@$MY_ORG" \
+  --role=roles/iam.serviceAccountUser
+
+# Allow service account impersonation
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+  --member="group:gcp-devops@$MY_ORG" \
+  --role=roles/iam.serviceAccountTokenCreator
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+   --member="group:gcp-devops@$MY_ORG" \
+   --role roles/cloudfunctions.admin
+
+gcloud projects add-iam-policy-binding $PROJECT_ID \
+   --member="group:gcp-devops@$MY_ORG" \
+   --role roles/run.admin  
 ```
 
 ## Running and Testing the Application Locally
@@ -109,7 +131,7 @@ Public service with no authentication:
 # Deploy to Cloud Run - this takes a couple of minutes
 gcloud run deploy "$SERVICE_NAME" \
   --port=8080 \
-  --image="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME" \
+  --image="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION" \
   --allow-unauthenticated \
   --region=$REGION \
   --platform=managed  \
