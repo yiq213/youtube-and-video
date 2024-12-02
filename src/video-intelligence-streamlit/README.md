@@ -163,7 +163,7 @@ gcloud run deploy "$SERVICE_NAME" \
   --region=$REGION \
   --platform=managed  \
   --project=$PROJECT_ID \
-  --set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$REGION,LOG_LEVEL=DEBUG
+  --set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$REGION,LOG_LEVEL=$LOG_LEVEL
 
 APP_URL=$(gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --format="value(status.address.url)")
 
@@ -298,3 +298,26 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="group:gcp-devops@$MY_ORG" \
     --role="roles/iap.httpsResourceAccessor"
 ```
+
+## Redeploying
+
+```bash
+# Let's set logging level to INFO rather than DEBUG
+export LOG_LEVEL='INFO'
+export VERSION="0.2"
+
+gcloud builds submit \
+  --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION"
+
+# Deploy to Cloud Run - this takes a couple of minutes
+gcloud run deploy "$SERVICE_NAME" \
+  --project=$PROJECT_ID \
+  --port=8080 \
+  --image="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION" \
+  --max-instances=1 \
+  --no-allow-unauthenticated \
+  --region=$REGION \
+  --platform=managed  \
+  --ingress internal-and-cloud-load-balancing \
+  --set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$REGION,LOG_LEVEL=$LOG_LEVEL
+  ```
