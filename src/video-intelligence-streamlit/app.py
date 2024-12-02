@@ -14,9 +14,9 @@ import mimetypes
 
 import streamlit as st
 
-from google.api_core.exceptions import ServiceUnavailable
 import vertexai
 from vertexai.generative_models import GenerativeModel, Part
+from google.api_core.exceptions import ServiceUnavailable
 
 from video_utils import ( 
     download_yt_video,

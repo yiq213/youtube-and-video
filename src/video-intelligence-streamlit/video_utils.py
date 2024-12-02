@@ -1,7 +1,7 @@
 """ Utility methods for downloading and uploading videos """
+from dataclasses import dataclass
 from io import BytesIO
 import re
-from dataclasses import dataclass
 
 from pytubefix import YouTube
 from pytubefix.cli import on_progress
@@ -39,6 +39,8 @@ def is_valid_youtube_url(url):
 
 @st.cache_data(ttl=3600, show_spinner=False) # We will use a dedicated spinner
 def download_yt_video(url: str) -> Video:
+    """ Download a YouTube video from the specified URL.
+    The video content is read into a BytesIO object, which is then wrapped in a Video object and returned. """
     try:
         yt = YouTube(url, on_progress_callback=on_progress)
         video_stream = yt.streams.get_highest_resolution()
@@ -58,6 +60,9 @@ def download_yt_video(url: str) -> Video:
 
 @st.cache_data(ttl=3600)
 def upload_video_bytesio(uploaded_file) -> Video:
+    """ Upload the specified file and store as a BytesIO object.
+    Wrap BytesIO object, and the filename, in a Video object.
+    """
     file_contents = uploaded_file.read()
     video_bytes = BytesIO(file_contents)  # Create BytesIO from uploaded file data
     filename = clean_filename(uploaded_file.name)  # Sanitize the filename

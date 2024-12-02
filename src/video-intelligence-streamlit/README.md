@@ -14,12 +14,12 @@ gcloud auth application-default login
 # Set these manually...
 export PROJECT_ID='<Your Google Cloud Project ID>'
 export REGION='<your region>'
-
 export MY_ORG=<enter your org domain>
-export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 
 # Or load from .env
 source ../../.env
+
+export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 
 export LOG_LEVEL='DEBUG'
 export VERSION="0.1"
@@ -118,14 +118,15 @@ docker run --rm -p 8080:8080 \
 ### Build and Push to Google Artifact Registry:
 
 ```bash
-# Create a GAR repo
+# One time setup - create a GAR repo
 gcloud artifacts repositories create "$REPO" \
   --location="$REGION" --repository-format=Docker
 
 # Allow authentication to the repo
 gcloud auth configure-docker "$REGION-docker.pkg.dev"
 
-# Build the image and push to the GAR - this takes a few minutes
+# Every time we want to build a new version and push to GAR
+# This will take a couple of minutes
 gcloud builds submit \
   --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION"
 ```
