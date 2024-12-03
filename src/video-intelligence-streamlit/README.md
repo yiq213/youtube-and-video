@@ -12,9 +12,10 @@ gcloud auth login # authenticate yourself to gcloud
 gcloud auth application-default login
 
 # Set these manually...
-export PROJECT_ID='<Your Google Cloud Project ID>'
-export REGION='<your region>'
-export MY_ORG=<enter your org domain>
+export PROJECT_ID="<Your Google Cloud Project ID>"
+export REGION="<your region>"
+export MY_ORG="<enter your org domain>"
+export DOMAIN_NAME="<enter application domain name>"
 
 # Or load from .env
 source ../../.env
@@ -168,28 +169,9 @@ gcloud run deploy "$SERVICE_NAME" \
 
 APP_URL=$(gcloud run services describe $SERVICE_NAME --platform managed --region $REGION --format="value(status.address.url)")
 
-### Setup IAP Access
-
-```bash
-export IAP_SA="service-$PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com"
-
-# Enable the IAP API
-gcloud services enable iap.googleapis.com
-
-# Create the required IAP service account
-gcloud beta services identity create --service=iap.googleapis.com --project=$PROJECT_ID
-
-# Grant the invoker permission to the service account
-gcloud run services add-iam-policy-binding $SERVICE_NAME \
-  --member="serviceAccount:$IAP_SA"  \
-  --region=$REGION \
-  --role="roles/run.invoker"
-```
-
 ### Create the External Application Load Balancer
 
 ```bash
-export DOMAIN_NAME="<enter domain>"
 export SVC_LB_IP="lb-ip"
 export SVC_CERT="svc-cert"
 export SERVERLESS_NEG="$SERVICE_NAME-serverless-neg"
@@ -203,6 +185,12 @@ gcloud compute addresses create $SVC_LB_IP \
     --network-tier=PREMIUM \
     --ip-version=IPV4 \
     --global
+
+# Or regional
+gcloud compute addresses create regional-lb-ip \
+    --project=$PROJECT_ID \
+    --network-tier=STANDARD \
+    --region=$REGION
 
 # Check it and get IP
 # We'll create a DNS A record pointing to this IP address later
@@ -274,6 +262,24 @@ gcloud run services update $SERVICE_NAME \
   --region=$REGION
 ```
 
+### Setup IAP Access
+
+```bash
+export IAP_SA="service-$PROJECT_NUMBER@gcp-sa-iap.iam.gserviceaccount.com"
+
+# Enable the IAP API
+gcloud services enable iap.googleapis.com
+
+# Create the required IAP service account
+gcloud beta services identity create --service=iap.googleapis.com --project=$PROJECT_ID
+
+# Grant the invoker permission to the service account
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+  --member="serviceAccount:$IAP_SA"  \
+  --region=$REGION \
+  --role="roles/run.invoker"
+```
+
 ### Enable IAP on the Backend
 
 ```bash
@@ -281,12 +287,6 @@ gcloud compute backend-services update $BACKEND_SERVICE --global --iap=enabled
 ```
 
 Now in Google Cloud Console: IAP, enable IAP on the backend service. Configure the Consent Screen.
-
-```bash
-gcloud run services update $SERVICE_NAME \
-  --ingress internal-and-cloud-load-balancing \
-  --region=$REGION
-```
 
 ### Grant the Appropriate IAM Role to the End Users
 
@@ -300,12 +300,19 @@ gcloud projects add-iam-policy-binding $PROJECT_ID \
     --role="roles/iap.httpsResourceAccessor"
 ```
 
+## Performance
+
+```bash
+gcloud beta run services update $SERVICE_NAME \
+  --region=$REGION --cpu-boost
+```
+
 ## Redeploying
 
 ```bash
 # Let's set logging level to INFO rather than DEBUG
 export LOG_LEVEL='INFO'
-export VERSION="0.2"
+export VERSION="0.3"
 
 gcloud builds submit \
   --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION"
@@ -320,5 +327,6 @@ gcloud run deploy "$SERVICE_NAME" \
   --region=$REGION \
   --platform=managed  \
   --ingress internal-and-cloud-load-balancing \
+  --cpu-boost \
   --set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$REGION,LOG_LEVEL=$LOG_LEVEL
   ```
