@@ -1,5 +1,7 @@
 # Youtube and Video
 
+![Video Intelligence Application](docs/static/media/vid-intel-screenshot.png)
+
 ## Repo Overview
 
 This repo describes an end-to-end journey. Briefly:
@@ -17,6 +19,8 @@ You can choose to follow / make use of any parts of this journey.
 The journey is in three parts. Additionally, each part is supported with a walkthrough, which you can find on [Medium](https://medium.com/python-in-plain-english/downloading-youtube-videos-extracting-audio-and-generating-transcripts-with-python-and-jupyter-c3068f82bbe0).
 
 ### Part 1: [youtube-demos.ipynb](src/notebooks/youtube-demos.ipynb)
+
+![Video Intelligence Application](docs/static/media/notebook.png)
 
 In this notebook I demonstrate:
 
@@ -37,6 +41,8 @@ See [walkthrough](https://medium.com/python-in-plain-english/downloading-youtube
 See [walkthrough](https://python.plainenglish.io/youtube-video-downloader-with-generative-ai-and-python-run-anywhere-transcribe-and-translate-dec2e593dd58).
 
 ### Part 3: [video-intelligence-streamlit](src/video-intelligence-streamlit/)
+
+![Video Intelligence Application](docs/static/media/vid-intel-architecture.png)
 
 - Provide a UI in the form of a Streamlit application
 - Containerise the application using Docker
