@@ -1,6 +1,6 @@
 # Youtube and Video
 
-![Video Intelligence Application](docs/static/media/vid-intel-screenshot.png)
+<img src="docs/static/media/vid-intel-screenshot.png" alt="Video Intelligence Application" width="420" />
 
 ## Repo Overview
 
@@ -20,7 +20,7 @@ The journey is in three parts. Additionally, each part is supported with a walkt
 
 ### Part 1: [youtube-demos.ipynb](src/notebooks/youtube-demos.ipynb)
 
-![Video Intelligence Application](docs/static/media/notebook.png)
+<img src="docs/static/media/notebook.png" alt="MVP notebook" width="420" />
 
 In this notebook I demonstrate:
 
@@ -42,7 +42,7 @@ See [walkthrough](https://python.plainenglish.io/youtube-video-downloader-with-g
 
 ### Part 3: [video-intelligence-streamlit](src/video-intelligence-streamlit/)
 
-![Video Intelligence Application](docs/static/media/vid-intel-architecture.png)
+<img src="docs/static/media/vid-intel-architecture.png" alt="Video Intelligence Architecture" width="420" />
 
 - Provide a UI in the form of a Streamlit application
 - Containerise the application using Docker
