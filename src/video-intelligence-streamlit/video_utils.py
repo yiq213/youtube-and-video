@@ -42,7 +42,7 @@ def download_yt_video(url: str) -> Video:
     """ Download a YouTube video from the specified URL.
     The video content is read into a BytesIO object, which is then wrapped in a Video object and returned. """
     try:
-        yt = YouTube(url, on_progress_callback=on_progress)
+        yt = YouTube(url, on_progress_callback=on_progress, client="WEB")
         video_stream = yt.streams.get_highest_resolution()
         if not video_stream:
             raise DownloadError("Stream not available", url)
