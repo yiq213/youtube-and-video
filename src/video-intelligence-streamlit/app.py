@@ -31,12 +31,7 @@ APP_NAME = "dazbo-vid-intel-streamlit"
 MODEL_NAME = "gemini-1.5-flash-002"
 MAX_VIDEO_SIZE = 40 # MB
 
-TEST_VIDEOS = [
-    "https://www.youtube.com/watch?v=udRAIF6MOm8",  # Sigrid - Burning Bridges (English)
-    "https://www.youtube.com/watch?v=CiTn4j7gVvY",  # Melissa Hollick - I Believe (English)
-    "https://www.youtube.com/watch?v=nLgHNu2N3JU",  # Jim Carey - Motivational speech (English)
-    "https://www.youtube.com/watch?v=d4N82wPpdg8",  # Jerry Heil & Alyona Alyona - Teresa & Maria (Ukrainian)
-]
+TEST_VIDEOS = "https://www.youtube.com/shorts/41iWg91yFv0"   # Rick Astley short
 
 @st.cache_data
 def retrieve_env_vars():
@@ -107,7 +102,7 @@ def main():
     video_container = st.container(border=True)
     with video_container:
         with st.container(border=True):
-            youtube_url = st.text_input("Enter YouTube URL:", value=TEST_VIDEOS[0])
+            youtube_url = st.text_input("Enter YouTube URL:", value=TEST_VIDEOS)
             load_yt_btn = st.button("Load video from YouTube", key="load_yt_btn")
             download_spinner = st.spinner("Downloading video...")
         

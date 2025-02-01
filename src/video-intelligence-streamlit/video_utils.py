@@ -20,7 +20,8 @@ class DownloadError(Exception):
         super().__init__(message)
         self.url = url  # Optionally store the URL that caused the error
 
-YT_REGEX = re.compile(r"^https:\/\/www\.youtube\.com\/watch\?v=[\w]*$")
+# YT_REGEX = re.compile(r"^https:\/\/www\.youtube\.com\/watch\?v=[\w]*$") # match simple YouTube URLs
+YT_REGEX = re.compile(r"^(https:\/\/www\.youtube\.com\/(watch\?v=|shorts\/)[\w-]{11})(?:&[\w-]+=[\w-]*)*$")
 
 @st.cache_data
 def clean_filename(filename):
@@ -31,7 +32,11 @@ def clean_filename(filename):
 
 def get_video_id(url: str) -> str:
     """ Return the video ID, which is the part after 'v=' """
-    return url.split("v=")[-1]
+    pattern = r'(?:v=|\/)([0-9A-Za-z_-]{11}).*'
+    match = re.search(pattern, url)
+    if match:
+        return match.group(1)
+    return None
 
 @st.cache_data
 def is_valid_youtube_url(url):
