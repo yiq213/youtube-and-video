@@ -330,3 +330,41 @@ gcloud run deploy "$SERVICE_NAME" \
   --cpu-boost \
   --set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$REGION,LOG_LEVEL=$LOG_LEVEL
   ```
+
+# Optimising
+
+We want to eliminate the LB.
+
+```bash
+# Or load from .env
+source ../../.env
+export LOG_LEVEL='INFO'
+export VERSION="0.4"
+
+# Allow the service to be public - we can't use allAuthenticatedUsers
+# If we want authenticated users, we'll need to implement OAuth in the application
+# E.g. https://developers.google.com/identity/protocols/oauth2/web-server
+gcloud run services add-iam-policy-binding $SERVICE_NAME \
+  --member="allUsers"  \
+  --region=$REGION \
+  --role="roles/run.invoker"
+
+# Allow public access, without using the LB
+gcloud run services update $SERVICE_NAME \
+  --ingress all \
+  --region=$REGION
+
+# Or to redeploy
+# Deploy to Cloud Run - this takes a couple of minutes
+gcloud run deploy "$SERVICE_NAME" \
+  --port=8080 \
+  --image="$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION" \
+  --max-instances=1 \
+  --allow-unauthenticated \
+  --region=$REGION \
+  --platform=managed  \
+  --project=$PROJECT_ID \
+  --ingress all \
+  --cpu-boost \
+  --set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$REGION,LOG_LEVEL=$LOG_LEVEL
+```
