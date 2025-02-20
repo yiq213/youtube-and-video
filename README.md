@@ -16,7 +16,7 @@ This repo describes an end-to-end journey. Briefly:
 - Ultimately, we build a solution that makes use of Google Gemini multiomodal GenAI.
 - Then we turn the notebook into a web application, using Streamlit.
 - Then we package the application as a container.
-- And finallly, we host the application on Google Cloud's serverless Cloud Run service.
+- And finally, we host the application on Google Cloud's serverless Cloud Run service.
 
 You can choose to follow / make use of any parts of this journey.
 
