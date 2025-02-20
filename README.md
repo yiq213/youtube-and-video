@@ -2,6 +2,10 @@
 
 <img src="docs/static/media/vid-intel-screenshot.png" alt="Video Intelligence Application" width="420" />
 
+## Repo Metadata
+
+Author: Darren Lester
+
 ## Repo Overview
 
 This repo describes an end-to-end journey. Briefly:
