@@ -9,7 +9,6 @@ steps:
     id: Build # Step ID acts as a stage name
     args:
       - build
-      - '--no-cache'
       - '-t'
       - >-
         $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
@@ -40,8 +39,7 @@ steps:
       - $_SERVICE_NAME # Name of the Cloud Run service to update
       - '--platform=managed' # Target platform
       - >-
-        --image=$_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA # The image to deploy
-      - >-
+        --image=$_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
         --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
       - '--region=$_DEPLOY_REGION' # Region where the service is deployed
       - '--quiet' # Suppress interactive prompts
