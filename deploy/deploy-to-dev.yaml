@@ -1,0 +1,75 @@
+# Cloud Build configuration for deploying the video-intelligence service to the DEV environment
+
+steps:
+  # === Stage: Build ===
+  # Build the Docker image using the Dockerfile in the specified source directory.
+  # The image is tagged with the commit SHA for traceability.
+  # --no-cache is used to ensure a clean build environment.
+  - name: gcr.io/cloud-builders/docker
+    id: Build # Step ID acts as a stage name
+    args:
+      - build
+      - '--no-cache'
+      - '-t'
+      - >-
+        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - src/video-intelligence-streamlit # Context directory for the build
+      - '-f'
+      - src/video-intelligence-streamlit/Dockerfile # Explicit path to the Dockerfile
+
+  # === Stage: Push ===
+  # Push the built Docker image to Google Artifact Registry.
+  - name: gcr.io/cloud-builders/docker
+    id: Push # Step ID acts as a stage name
+    args:
+      - push
+      - >-
+        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+
+  # === Stage: Deploy ===
+  # Deploy the new image to the Cloud Run service.
+  # Uses 'gcloud run services update' which creates the service if it doesn't exist,
+  # or updates it with the new image if it does.
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
+    id: Deploy # Step ID acts as a stage name
+    entrypoint: gcloud
+    args:
+      - run
+      - services
+      - update
+      - $_SERVICE_NAME # Name of the Cloud Run service to update
+      - '--platform=managed' # Target platform
+      - >-
+        --image=$_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA # The image to deploy
+      - >-
+        # Add labels for tracking the deployment source and artifacts
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
+      - '--region=$_DEPLOY_REGION' # Region where the service is deployed
+      - '--quiet' # Suppress interactive prompts
+
+# List of images built by this pipeline. This can be useful for vulnerability scanning
+# or other post-build actions.
+images:
+  - >-
+    $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+
+# Build options
+options:
+  # ALLOW_LOOSE permits the build to continue even if substitutions are not used in all fields.
+  substitutionOption: ALLOW_LOOSE
+  # Specifies that logs should only be sent to Cloud Logging.
+  logging: CLOUD_LOGGING_ONLY
+
+# Default substitution values. These can be overridden by trigger settings or manual runs.
+substitutions:
+  _DEPLOY_REGION: europe-west4 # Target deployment region
+  _TRIGGER_ID: b7befa46-0f54-4310-9db0-5c379bfd1f90 # Default trigger ID (useful for labeling/tracking)
+  _AR_HOSTNAME: europe-west4-docker.pkg.dev # Artifact Registry hostname
+  _PLATFORM: managed # Cloud Run platform
+  _SERVICE_NAME: video-intelligence # Name of the service being deployed
+
+# Tags associated with the build, useful for filtering builds in the Cloud Build history.
+tags:
+  - gcp-cloud-build-deploy-cloud-run
+  - gcp-cloud-build-deploy-cloud-run-managed
+  - video-intelligence # Service-specific tag
