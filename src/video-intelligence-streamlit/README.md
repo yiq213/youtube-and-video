@@ -5,11 +5,11 @@
 For local dev, always set these variables:
 
 ```bash
-gcloud auth login # authenticate yourself to gcloud
-
-# setup ADC so any locally running application can access Google APIs
-# Note that credentials will be saved to ~/.config/gcloud/application_default_credentials.json
-gcloud auth application-default login
+# Authenticate yourself to gcloud
+# And also setup ADC so any locally running application can access Google APIs
+# Note that credentials will be saved to 
+# ~/.config/gcloud/application_default_credentials.json
+gcloud auth login --update-adc 
 
 # Set these manually...
 export PROJECT_ID="<Your Google Cloud Project ID>"
@@ -18,18 +18,20 @@ export MY_ORG="<enter your org domain>"
 export DOMAIN_NAME="<enter application domain name>"
 
 # Or load from .env
-source ../../.env
+source .env
 
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
 
 export LOG_LEVEL='DEBUG'
-export VERSION="0.1"
 export REPO=video-intelligence
 export SERVICE_NAME=video-intelligence
 
 # Check we're in the correct project
 gcloud config list project
+
+# If we're on the wrong project...
 gcloud config set project $PROJECT_ID
+gcloud auth application-default set-quota-project $PROJECT_ID
 ```
 
 ## One-Time Google Cloud Setup
@@ -100,6 +102,9 @@ streamlit run app.py --browser.serverAddress=localhost
 ### Running in a Local Container
 
 ```bash
+# Get a unique version to tag our image
+export VERSION=$(git rev-parse --short HEAD)
+
 # To build as a container image
 docker build -t $SERVICE_NAME:$VERSION .
 
@@ -128,6 +133,7 @@ gcloud auth configure-docker "$REGION-docker.pkg.dev"
 
 # Every time we want to build a new version and push to GAR
 # This will take a couple of minutes
+export VERSION=$(git rev-parse --short HEAD)
 gcloud builds submit \
   --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION"
 ```
@@ -312,7 +318,7 @@ gcloud beta run services update $SERVICE_NAME \
 ```bash
 # Let's set logging level to INFO rather than DEBUG
 export LOG_LEVEL='INFO'
-export VERSION="0.3"
+export VERSION=$(git rev-parse --short HEAD)
 
 gcloud builds submit \
   --tag "$REGION-docker.pkg.dev/$PROJECT_ID/$REPO/$SERVICE_NAME:$VERSION"
@@ -339,7 +345,7 @@ We want to eliminate the LB.
 # Or load from .env
 source ../../.env
 export LOG_LEVEL='INFO'
-export VERSION="0.4"
+export VERSION=$(git rev-parse --short HEAD)
 
 # Allow the service to be public - we can't use allAuthenticatedUsers
 # If we want authenticated users, we'll need to implement OAuth in the application
