@@ -69,5 +69,4 @@ substitutions:
 # Tags associated with the build, useful for filtering builds in the Cloud Build history.
 tags:
   - gcp-cloud-build-deploy-cloud-run
-  - gcp-cloud-build-deploy-cloud-run-managed
   - video-intelligence # Service-specific tag
