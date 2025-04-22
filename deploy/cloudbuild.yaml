@@ -11,7 +11,7 @@ steps:
       - build
       - '-t'
       - >-
-        $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$COMMIT_SHA
+        $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$SHORT_SHA
       - src/video-intelligence-streamlit # Context directory for the build
       - '-f'
       - src/video-intelligence-streamlit/Dockerfile # Explicit path to the Dockerfile
@@ -23,7 +23,7 @@ steps:
     args:
       - push
       - >-
-        $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$COMMIT_SHA
+        $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$SHORT_SHA
 
   # === Stage: Deploy ===
   # Deploy the new image to the Cloud Run service.
@@ -39,9 +39,9 @@ steps:
       - $_SERVICE_NAME # Name of the Cloud Run service to update
       - '--platform=managed' # Target platform
       - >-
-        --image=$_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$COMMIT_SHA
+        --image=$_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$SHORT_SHA
       - >-
-        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
+        --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$SHORT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
       - '--region=$_DEPLOY_REGION' # Region where the service is deployed
       - '--quiet' # Suppress interactive prompts
 
@@ -49,7 +49,7 @@ steps:
 # or other post-build actions.
 images:
   - >-
-    $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$COMMIT_SHA
+    $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$SHORT_SHA
 
 # Build options
 options:
