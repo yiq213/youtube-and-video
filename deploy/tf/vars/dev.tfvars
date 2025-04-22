@@ -1,8 +1,7 @@
 # terraform.tfvars
 project_id         = "<Your Google Cloud Project ID>"
-region             = "us-central1" # Or your desired region
+region             = "europe-west4" # Or your desired region
 my_org             = "<your-org-domain.com>"
-devops_group_email = "gcp-devops@<your-org-domain.com>"
 service_name       = "video-intelligence"
 # artifact_repo_name = "video-intelligence" # Optional, defaults to service_name
 # log_level          = "INFO" # Optional, defaults to INFO

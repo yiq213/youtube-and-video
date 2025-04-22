@@ -11,7 +11,7 @@ steps:
       - build
       - '-t'
       - >-
-        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+        $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$COMMIT_SHA
       - src/video-intelligence-streamlit # Context directory for the build
       - '-f'
       - src/video-intelligence-streamlit/Dockerfile # Explicit path to the Dockerfile
@@ -23,7 +23,7 @@ steps:
     args:
       - push
       - >-
-        $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+        $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$COMMIT_SHA
 
   # === Stage: Deploy ===
   # Deploy the new image to the Cloud Run service.
@@ -39,7 +39,7 @@ steps:
       - $_SERVICE_NAME # Name of the Cloud Run service to update
       - '--platform=managed' # Target platform
       - >-
-        --image=$_AR_HOSTNAME/$PROJECT_ID/$_SERVICE_NAME/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+        --image=$_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$COMMIT_SHA
       - >-
         --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
       - '--region=$_DEPLOY_REGION' # Region where the service is deployed
@@ -49,7 +49,7 @@ steps:
 # or other post-build actions.
 images:
   - >-
-    $_AR_HOSTNAME/$PROJECT_ID/cloud-run-source-deploy/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+    $_AR_HOSTNAME/$PROJECT_ID/$_GAR_REPO/$_SERVICE_NAME:$COMMIT_SHA
 
 # Build options
 options:
@@ -65,6 +65,7 @@ substitutions:
   _AR_HOSTNAME: europe-west4-docker.pkg.dev # Artifact Registry hostname
   _PLATFORM: managed # Cloud Run platform
   _SERVICE_NAME: video-intelligence # Name of the service being deployed
+  _GAR_REPO: video-intelligence
 
 # Tags associated with the build, useful for filtering builds in the Cloud Build history.
 tags:

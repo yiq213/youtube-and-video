@@ -16,12 +16,6 @@ variable "my_org" {
   type        = string
 }
 
-variable "devops_group_email" {
-  description = "The email address of the DevOps group for IAM permissions."
-  type        = string
-  # Example: "gcp-devops@your-org.com"
-}
-
 variable "service_name" {
   description = "The name for the Cloud Run service and related resources."
   type        = string
