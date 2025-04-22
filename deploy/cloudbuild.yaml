@@ -1,4 +1,4 @@
-# Cloud Build configuration for deploying the video-intelligence service to the DEV environment
+# Cloud Build configuration for deploying the video-intelligence service
 
 steps:
   # === Stage: Build ===
