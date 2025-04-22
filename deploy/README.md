@@ -16,4 +16,6 @@
 
 ## Steps
 
-First, follow "Every Session" guidance from [../README.md](../README.md).
+1. Create your Dev and Prod projects. Ensure you have required roles, or `Editor` role.
+2. Update your .env values.
+3. Follow "Every Session" guidance from [../README.md](../README.md).

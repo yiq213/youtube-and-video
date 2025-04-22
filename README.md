@@ -7,6 +7,7 @@
 - [Overview](#overview)
 - [Repo Metadata](#repo-metadata)
 - [Repo Overview](#repo-overview)
+- [Repo Structure](#repo-structure)
 - [Overview of Jupyter Notebooks](#overview-of-jupyter-notebooks)
   - [Running the Jupyter Notebook Locally](#running-the-jupyter-notebook-locally)
   - [Running and Testing the Application Locally](#running-and-testing-the-application-locally)

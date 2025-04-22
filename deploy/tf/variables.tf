@@ -64,7 +64,7 @@ variable "cicd_roles" {
     "roles/aiplatform.user",
     "roles/storage.admin",
     "roles/cloudbuild.builds.builder",
-    "roles/run.admin"
+    "roles/run.admin",
     "roles/run.invoker",
     "roles/storage.admin",
     "roles/discoveryengine.editor",

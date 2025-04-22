@@ -38,7 +38,18 @@ coverage.xml
 # secrets
 *.key
 .gitsecret/keys/random_seed
- 
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+*.tfplan
+.terraform.lock.hcl
+.terraform/
+override.tf
+*_override.tf
+.terraformrc
+terraform.rc
+
 # Random
 .*/
 .vscode
