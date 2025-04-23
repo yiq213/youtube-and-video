@@ -22,12 +22,6 @@ variable "cicd_runner_sa_name" {
   default     = "cicd-runner"
 }
 
-variable "service_name" {
-  description = "The name for the Cloud Run service and related resources."
-  type        = string
-  default     = "video-intelligence"
-}
-
 variable "repository_name" {
   description = "Name of the repository you'd like to connect to Cloud Build"
   type        = string
@@ -38,7 +32,8 @@ variable "repository_owner" {
   type        = string
 }
 
-# Retrieve this from the GitHub App settings
+# Retrieve this from the GitHub App settings, and then retrieve from the URL
+# E.g. https://github.com/settings/installations/12345678
 variable "github_app_installation_id" {
   description = "GitHub App Installation ID (e.g. 12345678)"
   type        = string
@@ -49,6 +44,18 @@ variable "github_pat_secret_id" {
   description = "GitHub PAT secret id in Cloud Secret Manager"
   type        = string
   default     = "github-pat"
+}
+
+variable "service_name" {
+  description = "The name for the Cloud Run service and related resources."
+  type        = string
+  default     = "video-intelligence"
+}
+
+variable "log_level" {
+  description = "Logging level."
+  type        = string
+  default     = "DEBUG"
 }
 
 variable "connection_exists" {
