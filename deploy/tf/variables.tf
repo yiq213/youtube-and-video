@@ -63,12 +63,6 @@ variable "artifact_repo_name" {
   default     = "video-intelligence" # Matches the service name by default
 }
 
-variable "log_level" {
-  description = "Log level environment variable for the Cloud Run service."
-  type        = string
-  default     = "INFO"
-}
-
 variable "trigger_branch_name" {
   description = "The git branch name that should activate this trigger."
   type        = string

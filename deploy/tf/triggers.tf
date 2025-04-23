@@ -28,6 +28,7 @@ resource "google_cloudbuild_trigger" "cd_pipeline" {
     _PLATFORM                      = "managed"
     _SERVICE_NAME                  = var.service_name
     _LOG_LEVEL                     = "DEBUG"
+    _MAX_INSTANCES                 = "1"
   }
 
   depends_on = [resource.google_project_service.cicd_services, resource.google_project_service.project_services, google_cloudbuildv2_repository.repo]
