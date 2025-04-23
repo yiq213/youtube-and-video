@@ -16,10 +16,45 @@ variable "my_org" {
   type        = string
 }
 
+variable "cicd_runner_sa_name" {
+  description = "Service account name to be used for the CICD processes"
+  type        = string
+  default     = "cicd-runner"
+}
+
 variable "service_name" {
   description = "The name for the Cloud Run service and related resources."
   type        = string
   default     = "video-intelligence"
+}
+
+variable "repository_name" {
+  description = "Name of the repository you'd like to connect to Cloud Build"
+  type        = string
+}
+
+variable "repository_owner" {
+  description = "Owner of the GitHub repository"
+  type        = string
+}
+
+# Retrieve this from the GitHub App settings
+variable "github_app_installation_id" {
+  description = "GitHub App Installation ID (e.g. 12345678)"
+  type        = string
+}
+
+# E.g. github-connection-github-oauthtoken-218621
+variable "github_pat_secret_id" {
+  description = "GitHub PAT secret id in Cloud Secret Manager"
+  type        = string
+  default     = "github-pat"
+}
+
+variable "connection_exists" {
+  description = "Flag indicating if a Cloud Build connection already exists"
+  type        = bool
+  default     = false
 }
 
 variable "artifact_repo_name" {
@@ -34,26 +69,10 @@ variable "log_level" {
   default     = "INFO"
 }
 
-variable "cloud_run_max_instances" {
-  description = "Maximum number of instances for the Cloud Run service."
-  type        = number
-  default     = 1
-}
-
-variable "cloud_run_allow_unauthenticated" {
-  description = "Allow unauthenticated access to the Cloud Run service."
-  type        = bool
-  default     = true # Defaulting to true for public access scenario
-}
-
-variable "cloud_run_ingress" {
-  description = "Ingress setting for Cloud Run ('all', 'internal-only', 'internal-and-cloud-load-balancing')."
+variable "trigger_branch_name" {
+  description = "The git branch name that should activate this trigger."
   type        = string
-  default     = "all" # Defaulting to 'all' for public access scenario
-  validation {
-    condition     = contains(["all", "internal-only", "internal-and-cloud-load-balancing"], var.cloud_run_ingress)
-    error_message = "Allowed values for cloud_run_ingress are: all, internal-only, internal-and-cloud-load-balancing."
-  }
+  default     = "main" # Default might be prod, override for dev
 }
 
 variable "cicd_roles" {
