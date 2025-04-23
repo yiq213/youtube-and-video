@@ -44,7 +44,7 @@ resource "google_cloudbuildv2_repository" "repo" {
   remote_uri       = "https://github.com/${var.repository_owner}/${var.repository_name}.git"
   depends_on = [
     resource.google_project_service.cicd_services,
-    resource.google_project_service.shared_services,
+    resource.google_project_service.project_services,
     data.github_repository.existing_repo
   ]
 }
