@@ -7,5 +7,5 @@ resource "google_artifact_registry_repository" "repo" {
   description   = "Image repository application"
   format        = "DOCKER"
 
-  depends_on = [resource.google_project_service.cicd_services] # Ensure APIs enabled
+  depends_on = [resource.google_project_service.apis] # Ensure APIs enabled
 }

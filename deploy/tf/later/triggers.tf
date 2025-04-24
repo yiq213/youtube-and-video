@@ -31,7 +31,7 @@ resource "google_cloudbuild_trigger" "cd_pipeline" {
     _MAX_INSTANCES                 = "1"
   }
 
-  depends_on = [resource.google_project_service.cicd_services, resource.google_project_service.project_services, google_cloudbuildv2_repository.repo]
+  depends_on = [resource.google_project_service.apis, google_cloudbuildv2_repository.repo]
 
   tags = [
     "terraform-managed",

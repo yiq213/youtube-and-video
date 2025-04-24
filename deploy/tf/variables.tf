@@ -73,7 +73,7 @@ variable "artifact_repo_name" {
 variable "trigger_branch_name" {
   description = "The git branch name that should activate this trigger."
   type        = string
-  default     = "main" # Default might be prod, override for dev
+  default     = "main" # Default might be dev, override for prod
 }
 
 variable "cicd_roles" {
