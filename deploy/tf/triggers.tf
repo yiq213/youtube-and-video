@@ -19,7 +19,7 @@ resource "google_cloudbuild_trigger" "cd_pipeline" {
     "deploy/**"
   ]
 
-  ignored_files   = ["README.md"] # Add this line to ignore README.md changes
+  ignored_files   = ["README.md"]
 
   # Define substitutions - these override defaults in cloudbuild.yaml
   substitutions = {
@@ -27,7 +27,7 @@ resource "google_cloudbuild_trigger" "cd_pipeline" {
     _AR_HOSTNAME                   = "${var.region}-docker.pkg.dev"
     _PLATFORM                      = "managed"
     _SERVICE_NAME                  = var.service_name
-    _LOG_LEVEL                     = "DEBUG"
+    _LOG_LEVEL                     = var.log_level
     _MAX_INSTANCES                 = "1"
   }
 
@@ -35,7 +35,7 @@ resource "google_cloudbuild_trigger" "cd_pipeline" {
 
   tags = [
     "terraform-managed",
-    var.service_name, # Match tags in your cloudbuild.yaml if desired
+    var.service_name, 
     var.trigger_branch_name # Tag with the branch/environment
   ]
 
