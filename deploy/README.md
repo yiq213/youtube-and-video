@@ -19,7 +19,7 @@
 1. Create your Dev and Prod projects. Ensure you have required roles, or `Editor` role.
 1. Proceed with the following steps using the `Dev` project.
 1. Connect your GitHub repo to Cloud Build. See [Cloud Build Repository Setup](https://cloud.google.com/build/docs/repositories#whats_next). Name it `github-connection`.
-1. Update your .env values.
+1. Update your `.env` values.
 1. Follow "Every Session" guidance from [../README.md](../README.md).
 1. Enable APIs needed to run Terraform:
 
@@ -29,4 +29,10 @@ gcloud services enable \
   cloudresourcemanager.googleapis.com \
   cloudbuild.googleapis.com \
   secretmanager.googleapis.com
+```
+
+### Create GitHub PAT
+
+```bash
+echo -n <paste_your_token> | gcloud secrets create github_pat --data-file=-
 ```

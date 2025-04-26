@@ -1,9 +1,25 @@
-# Set up the connection between the Google Cloud project (specifically Cloud Build) 
-# and the GitHub repository
+# Set up the connection between the Google Cloud project 
+# (specifically Cloud Build) and the GitHub repository
 
 provider "github" {
   token = data.google_secret_manager_secret_version.github_token.secret_data
   owner = var.repository_owner
+}
+
+# Grant the Cloud Build Service Agent access to the specific secret
+# Use the iam_member resource to actively manage the permission
+resource "google_secret_manager_secret_iam_member" "cloudbuild_secret_accessor" {
+  # Grant permission on the secret itself, not just a version
+  project   = var.project_id
+  secret_id = var.github_pat_secret_id # Reference the secret name via variable
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-cloudbuild.iam.gserviceaccount.com"
+
+  depends_on = [
+    # Ensure the secret exists (implicitly via data source) and IAM API is enabled
+    data.google_secret_manager_secret_version.github_token,
+    resource.google_project_service.apis
+  ]
 }
 
 # Fetch the GitHub PAT secret
@@ -23,10 +39,12 @@ resource "google_cloudbuildv2_connection" "github_connection" {
   github_config {
     app_installation_id = var.github_app_installation_id
     authorizer_credential {
-      oauth_token_secret_version = "projects/${var.project_id}/secrets/${var.github_pat_secret_id}/versions/latest"
+      oauth_token_secret_version = data.google_secret_manager_secret_version.github_token.id
     }
   }
-  depends_on = [resource.google_project_service.cicd_services, resource.google_project_service.project_services]
+  depends_on = [
+    google_secret_manager_secret_iam_member.cloudbuild_secret_accessor,
+    resource.google_project_service.apis]
 }
 
 # Try to get existing repo
@@ -40,7 +58,7 @@ resource "google_cloudbuildv2_repository" "repo" {
   location = var.region
   name     = var.repository_name
   
-  parent_connection = "projects/${var.project_id}/locations/${var.region}/connections/github-connection"
+  parent_connection = one(google_cloudbuildv2_connection.github_connection[*].id)
   remote_uri       = "https://github.com/${var.repository_owner}/${var.repository_name}.git"
   depends_on = [
     resource.google_project_service.apis,
