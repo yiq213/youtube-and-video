@@ -142,7 +142,7 @@ export REGION="<your region>"
 export MY_ORG="<enter your org domain>"
 export DOMAIN_NAME="<enter application domain name>"
 
-# Or load from .env
+# Or load from .env, or .env.dev, or whatever
 source .env
 
 export PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format="value(projectNumber)")
