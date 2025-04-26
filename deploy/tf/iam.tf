@@ -6,7 +6,7 @@ data "google_project" "project" {
 
 # 1. Assign roles for the CICD project
 resource "google_project_iam_member" "cicd_project_roles" {
-  for_each = toset(var.cicd_roles)
+  for_each = toset(local.roles)
 
   project    = var.project_id
   role       = each.value

@@ -18,4 +18,17 @@ locals {
     "serviceusage.googleapis.com",
     "logging.googleapis.com",    
   ]
+
+  roles = [
+    "roles/iam.serviceAccountUser",
+    "roles/aiplatform.user",
+    "roles/storage.admin",
+    "roles/cloudbuild.builds.builder",
+    "roles/run.admin",
+    "roles/run.invoker",
+    "roles/storage.admin",
+    "roles/discoveryengine.editor",
+    "roles/logging.logWriter",
+    "roles/artifactregistry.writer"
+  ]
 }

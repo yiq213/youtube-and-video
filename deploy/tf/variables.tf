@@ -75,20 +75,3 @@ variable "trigger_branch_name" {
   type        = string
   default     = "main" # Default might be dev, override for prod
 }
-
-variable "cicd_roles" {
-  description = "List of roles to assign to the CICD runner service account"
-  type        = list(string)
-  default = [
-    "roles/iam.serviceAccountUser",
-    "roles/aiplatform.user",
-    "roles/storage.admin",
-    "roles/cloudbuild.builds.builder",
-    "roles/run.admin",
-    "roles/run.invoker",
-    "roles/storage.admin",
-    "roles/discoveryengine.editor",
-    "roles/logging.logWriter",
-    "roles/artifactregistry.writer"    
-  ]
-}

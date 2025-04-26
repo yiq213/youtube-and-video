@@ -157,6 +157,7 @@ gcloud config list project
 # If we're on the wrong project...
 gcloud config set project $PROJECT_ID
 gcloud auth application-default set-quota-project $PROJECT_ID
+gcloud config list project
 ```
 
 ### One-Time Google Cloud Setup
