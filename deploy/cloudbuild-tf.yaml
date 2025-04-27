@@ -9,12 +9,10 @@ steps:
   - name: 'hashicorp/terraform:1.10'
     id: Terraform Init
     entrypoint: 'sh'
+    dir: "deploy/tf"
     args:
       - '-c'
       - |
-        cd deploy/tf
-
-        # Initialize Terraform - reads backend config from GCS
         terraform init -backend-config="bucket=$_TF_STATE_BUCKET"
 
   # === Generate Terraform Plan ===
@@ -23,10 +21,10 @@ steps:
   - name: 'hashicorp/terraform:1.10'
     id: Terraform Plan
     entrypoint: 'sh'
+    dir: "deploy/tf"
     args:
       - '-c'
       - |
-        cd deploy/tf
         terraform plan \
           -var 'project_id=$PROJECT_ID' \
           -var 'region=$_DEPLOY_REGION' \
@@ -50,10 +48,10 @@ steps:
   - name: 'hashicorp/terraform:1.10'
     id: Terraform Apply
     entrypoint: 'sh'
+    dir: "deploy/tf"
     args:
       - '-c'
       - |
-        cd deploy/tf
         terraform apply -auto-approve tfplan
 
     # Wait for plan to complete
