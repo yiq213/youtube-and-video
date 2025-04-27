@@ -34,6 +34,7 @@ locals {
     "roles/logging.logWriter",
     "roles/artifactregistry.writer",
     "roles/secretmanager.secretAccessor",
+    "roles/cloudbuild.connectionAdmin", 
     "roles/resourcemanager.projectIamAdmin"
   ]
 }
