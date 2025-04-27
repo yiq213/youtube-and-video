@@ -19,20 +19,6 @@ steps:
         # Initialize Terraform - reads backend config from GCS
         terraform init -backend-config="bucket=$_TF_STATE_BUCKET"
 
-  # === DIAGNOSTIC STEP: Test Secret Access ===
-  # Add this step to test access directly using gcloud
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk:slim'
-    id: Test Secret Access
-    entrypoint: 'gcloud'
-    args:
-      - 'secrets'
-      - 'versions'
-      - 'access'
-      - 'latest'
-      - '--secret=github-pat' # Use the literal secret name here
-      - '--project=$PROJECT_ID'
-    waitFor: ['Terraform Init'] # Run after init
-
   # === Generate Terraform Plan ===
   # Generate a plan to see changes before applying.
   # The plan file can be saved as an artifact for review or manual approval steps if needed.
@@ -59,7 +45,7 @@ steps:
           -out=tfplan
 
     # Wait for init to complete
-    waitFor: ['Terraform Init', 'Test Secret Access']
+    waitFor: ['Terraform Init']
 
   # === Apply Terraform ===
   # Apply the Terraform configuration automatically.

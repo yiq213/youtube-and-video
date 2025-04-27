@@ -9,14 +9,15 @@ provider "github" {
 # Grant the Cloud Build Service Agent access to the specific secret
 # Use the iam_member resource to actively manage the permission
 resource "google_secret_manager_secret_iam_member" "cloudbuild_secret_accessor" {
-  # Grant permission on the secret itself, not just a version
+  # Grant permission on the secret itself
   project   = var.project_id
   secret_id = var.github_pat_secret_id # Reference the secret name via variable
   role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-cloudbuild.iam.gserviceaccount.com"
+  # member    = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-cloudbuild.iam.gserviceaccount.com"
+  member    = "serviceAccount:${resource.google_service_account.cicd_runner_sa.email}"
 
   depends_on = [
-    # Ensure the secret exists (implicitly via data source) and IAM API is enabled
+    # Ensure the secret exists
     data.google_secret_manager_secret_version.github_token,
     resource.google_project_service.apis
   ]
