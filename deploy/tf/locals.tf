@@ -21,6 +21,7 @@ locals {
   ]
 
   roles = [
+    "roles/serviceusage.serviceUsageAdmin",
     "roles/iam.serviceAccountUser",
     "roles/aiplatform.user",
     "roles/storage.admin",
@@ -30,6 +31,7 @@ locals {
     "roles/storage.admin",
     "roles/discoveryengine.editor",
     "roles/logging.logWriter",
-    "roles/artifactregistry.writer"
+    "roles/artifactregistry.writer",
+    "roles/secretmanager.secretAccessor",
   ]
 }

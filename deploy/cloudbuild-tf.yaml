@@ -40,7 +40,7 @@ steps:
           -var 'artifact_repo_name=$_ARTIFACT_REPO_NAME' \
           -var 'github_app_installation_id=$_GITHUB_APP_INSTALLATION_ID' \
           -var 'github_pat_secret_id=$_GITHUB_PAT_SECRET_ID' \
-          -var 'trigger_branch_name=$_BRANCH'
+          -var 'trigger_branch_name=$_BRANCH' \
           -var 'log_level=$_LOG_LEVEL' \
           -out=tfplan
 
