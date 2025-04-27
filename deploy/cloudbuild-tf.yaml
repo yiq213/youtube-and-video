@@ -35,8 +35,8 @@ steps:
           -var 'cb_region=$_CB_REGION' \
           -var 'my_org=$_ORG'
           -var 'service_name=$_SERVICE_NAME' \
-          -var 'repo_name=$_REPO_NAME' \
-          -var 'repo_owner=$_REPO_OWNER' \
+          -var 'repository_name=$_REPO_NAME' \
+          -var 'repository_owner=$_REPO_OWNER' \
           -var 'artifact_repo_name=$_ARTIFACT_REPO_NAME' \
           -var 'github_app_installation_id=$_GITHUB_APP_INSTALLATION_ID' \
           -var 'github_pat_secret_id=$_GITHUB_PAT_SECRET_ID' \
