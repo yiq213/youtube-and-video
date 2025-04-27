@@ -13,7 +13,6 @@ resource "google_secret_manager_secret_iam_member" "cloudbuild_secret_accessor" 
   project   = var.project_id
   secret_id = var.github_pat_secret_id # Reference the secret name via variable
   role      = "roles/secretmanager.secretAccessor"
-  # member    = "serviceAccount:service-${data.google_project.project.number}@gcp-sa-cloudbuild.iam.gserviceaccount.com"
   member    = "serviceAccount:${resource.google_service_account.cicd_runner_sa.email}"
 
   depends_on = [
@@ -28,6 +27,8 @@ data "google_secret_manager_secret_version" "github_token" {
   project = var.project_id
   secret  = var.github_pat_secret_id
   version = "latest"
+
+  depends_on = [resource.google_project_service.apis]
 }
 
 # Create the GitHub connection

@@ -1,9 +1,9 @@
 terraform {
-  required_version = ">= 1.0.0"
+  required_version = ">= 1.9.0"
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = "< 7.0.0"
+      version = "< 7.0.0" # Use latest version that satisfies this condition
     }
     github = {
       source  = "integrations/github"
