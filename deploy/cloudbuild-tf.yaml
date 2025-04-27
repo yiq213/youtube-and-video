@@ -5,9 +5,7 @@ serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/${_CICD_RUNNER_SA_EMAIL}'
 
 steps:
   # === Initialize Terraform ===
-  # Assumes your Terraform files are in the 'deploy/' directory relative to your repo root.
   # Assumes you are using a GCS backend for Terraform state, configured in your TF files.
-  # You might need to pass backend configuration dynamically if it changes per environment/project.
   - name: 'hashicorp/terraform:1.10'
     id: Terraform Init
     entrypoint: 'sh'
