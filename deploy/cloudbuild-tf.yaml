@@ -8,7 +8,7 @@ steps:
   # Assumes your Terraform files are in the 'deploy/' directory relative to your repo root.
   # Assumes you are using a GCS backend for Terraform state, configured in your TF files.
   # You might need to pass backend configuration dynamically if it changes per environment/project.
-  - name: 'hashicorp/terraform:1.7.5'
+  - name: 'hashicorp/terraform:1.10'
     id: Terraform Init
     entrypoint: 'sh'
     args:
@@ -22,7 +22,7 @@ steps:
   # === Generate Terraform Plan ===
   # Generate a plan to see changes before applying.
   # The plan file can be saved as an artifact for review or manual approval steps if needed.
-  - name: 'hashicorp/terraform:1.7.5'
+  - name: 'hashicorp/terraform:1.10'
     id: Terraform Plan
     entrypoint: 'sh'
     args:
@@ -49,7 +49,7 @@ steps:
 
   # === Apply Terraform ===
   # Apply the Terraform configuration automatically.
-  - name: 'hashicorp/terraform:1.7.5'
+  - name: 'hashicorp/terraform:1.10'
     id: Terraform Apply
     entrypoint: 'sh'
     args:
