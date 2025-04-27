@@ -17,12 +17,13 @@ locals {
     "cloudresourcemanager.googleapis.com",
     "iam.googleapis.com",
     "serviceusage.googleapis.com",
-    "logging.googleapis.com",    
+    "logging.googleapis.com",
+    "secretmanager.googleapis.com"  
   ]
 
   roles = [
     "roles/serviceusage.serviceUsageAdmin",
-    "roles/iam.serviceAccountUser",
+    "roles/iam.serviceAccountAdmin",
     "roles/aiplatform.user",
     "roles/storage.admin",
     "roles/cloudbuild.builds.builder",
@@ -33,5 +34,6 @@ locals {
     "roles/logging.logWriter",
     "roles/artifactregistry.writer",
     "roles/secretmanager.secretAccessor",
+    "roles/resourcemanager.projectIamAdmin"
   ]
 }
