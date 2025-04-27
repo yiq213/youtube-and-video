@@ -33,6 +33,7 @@ resource "google_service_account_iam_member" "cicd_run_invoker_account_user" {
 }
 
 # Grant cicd-runner permission to actAs the Compute Engine default SA for Cloud Run deployments
+# Amend for whatever SA we attach using --service-account when we deploy the Cloud Run service
 resource "google_service_account_iam_member" "cicd_runner_actas_compute_sa" {
   # The service account we are granting permissions ON
   service_account_id = "projects/${var.project_id}/serviceAccounts/${data.google_project.project.number}-compute@developer.gserviceaccount.com"
