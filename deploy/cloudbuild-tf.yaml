@@ -33,7 +33,7 @@ steps:
           -var 'project_id=$PROJECT_ID' \
           -var 'region=$_DEPLOY_REGION' \
           -var 'cb_region=$_CB_REGION' \
-          -var 'my_org=$_ORG'
+          -var 'my_org=$_ORG' \
           -var 'service_name=$_SERVICE_NAME' \
           -var 'repository_name=$_REPO_NAME' \
           -var 'repository_owner=$_REPO_OWNER' \
