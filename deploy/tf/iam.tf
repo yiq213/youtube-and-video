@@ -23,10 +23,19 @@ resource "google_service_account_iam_member" "cicd_run_invoker_token_creator" {
   member             = "serviceAccount:${resource.google_service_account.cicd_runner_sa.email}"
   depends_on         = [resource.google_project_service.apis]
 }
+
 # Special assignment: Allow the CICD SA to impersonate himself for trigger creation
 resource "google_service_account_iam_member" "cicd_run_invoker_account_user" {
   service_account_id = google_service_account.cicd_runner_sa.name
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${resource.google_service_account.cicd_runner_sa.email}"
   depends_on         = [resource.google_project_service.apis]
+}
+
+# Grant cicd-runner permission to actAs the Compute Engine default SA for Cloud Run deployments
+resource "google_service_account_iam_member" "cicd_runner_actas_compute_sa" {
+  # The service account we are granting permissions ON
+  service_account_id = "projects/${var.project_id}/serviceAccounts/${data.google_project.project.number}-compute@developer.gserviceaccount.com"
+  role               = "roles/iam.serviceAccountUser" # The role being granted
+  member             = "serviceAccount:${google_service_account.cicd_runner_sa.email}"
 }
