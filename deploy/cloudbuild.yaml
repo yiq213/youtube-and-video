@@ -1,6 +1,6 @@
 # Cloud Build configuration for deploying the video-intelligence service
 
-# serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/${_CICD_RUNNER_SA_EMAIL}'
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/${_CICD_RUNNER_SA_EMAIL}'
 
 steps:
   # === Stage: Build ===
