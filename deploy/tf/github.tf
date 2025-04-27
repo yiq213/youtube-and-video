@@ -33,7 +33,7 @@ data "google_secret_manager_secret_version" "github_token" {
 resource "google_cloudbuildv2_connection" "github_connection" {
   count      = var.connection_exists ? 0 : 1
   project    = var.project_id
-  location   = var.region
+  location   = var.cb_region
   name       = "github-connection"
 
   github_config {
@@ -55,7 +55,7 @@ data "github_repository" "existing_repo" {
 # Link the GitHub repo to the Cloud Build connection
 resource "google_cloudbuildv2_repository" "repo" {
   project  = var.project_id
-  location = var.region
+  location = var.cb_region
   name     = var.repository_name
   
   parent_connection = one(google_cloudbuildv2_connection.github_connection[*].id)

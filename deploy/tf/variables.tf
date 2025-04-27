@@ -8,7 +8,13 @@ variable "project_id" {
 variable "region" {
   description = "The Google Cloud region for deployment."
   type        = string
-  default     = "europe-west4" # Or your preferred default
+  default     = "europe-west4"
+}
+
+variable "cb_region" {
+  description = "The Google Cloud region where Cloud Build will run."
+  type        = string
+  default     = "europe-west1"
 }
 
 variable "my_org" {

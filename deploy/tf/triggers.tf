@@ -1,6 +1,6 @@
 resource "google_cloudbuild_trigger" "cd_pipeline" {
   project = var.project_id
-  location = var.region
+  location = var.cb_region # CB has quote restrictions in certain regions
   name    = "deploy-video-intelligence"
   service_account = resource.google_service_account.cicd_runner_sa.id
   description = "Trigger for ${var.trigger_branch_name} branch deployment"
@@ -24,7 +24,8 @@ resource "google_cloudbuild_trigger" "cd_pipeline" {
   # Define substitutions - these override defaults in cloudbuild.yaml
   substitutions = {
     _DEPLOY_REGION                 = var.region
-    _AR_HOSTNAME                   = "${var.region}-docker.pkg.dev"
+    _CB_REGION                     = var.cb_region
+    _AR_HOSTNAME                   = "${var.cb_region}-docker.pkg.dev"
     _PLATFORM                      = "managed"
     _SERVICE_NAME                  = var.service_name
     _LOG_LEVEL                     = var.log_level

@@ -2,7 +2,7 @@
 
 resource "google_artifact_registry_repository" "repo" {
   project       = var.project_id
-  location      = var.region
+  location      = var.cb_region
   repository_id = var.artifact_repo_name
   description   = "Image repository application"
   format        = "DOCKER"
