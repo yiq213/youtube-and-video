@@ -2,7 +2,7 @@
 # (specifically Cloud Build) and the GitHub repository
 
 provider "github" {
-  token = data.google_secret_manager_secret_version.github_token.secret_data
+  token = data.google_secret_manager_secret_version_access.github_token.secret_data
   owner = var.repository_owner
 }
 
@@ -17,17 +17,14 @@ resource "google_secret_manager_secret_iam_member" "cloudbuild_secret_accessor" 
 
   depends_on = [
     # Ensure the secret exists
-    data.google_secret_manager_secret_version.github_token,
+    data.google_secret_manager_secret_version_access.github_token,
     resource.google_project_service.apis
   ]
 }
 
 # Fetch the GitHub PAT secret
-data "google_secret_manager_secret_version" "github_token" {
-  project = var.project_id
-  secret  = var.github_pat_secret_id
-  version = "latest"
-
+data "google_secret_manager_secret_version_access" "github_token" {
+  secret = var.github_pat_secret_id
   depends_on = [resource.google_project_service.apis]
 }
 
@@ -41,7 +38,7 @@ resource "google_cloudbuildv2_connection" "github_connection" {
   github_config {
     app_installation_id = var.github_app_installation_id
     authorizer_credential {
-      oauth_token_secret_version = data.google_secret_manager_secret_version.github_token.id
+      oauth_token_secret_version = data.google_secret_manager_secret_version_access.github_token.id
     }
   }
   depends_on = [
