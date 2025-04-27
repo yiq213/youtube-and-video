@@ -76,6 +76,13 @@ gcloud services enable \
   secretmanager.googleapis.com
 ```
 
+Now create a GCS bucket in our Google Cloud project to manage our Terraform state:
+
+```bash
+gcloud storage buckets create --location $REGION gs://${PROJECT_ID}-tfstate
+gcloud storage buckets update gs://${PROJECT_ID}-tfstate --versioning
+```
+
 If you haven't already, [install the Cloud Build GitHub Connector app](https://cloud.google.com/build/docs/automating-builds/github/connect-repo-github?generation=2nd-gen#console). Obtain the GitHub App Installation ID from the URL, when you [view/edit the configuration for the connector app](https://github.com/apps/google-cloud-build). Add it to your `terraform.tfvars` file.
 
 
@@ -89,7 +96,7 @@ Now we're ready to run the Terraform:
 
 ```bash
 cd deploy/tf
-terraform init
+terraform init -backend-config="bucket=${PROJECT_ID}-tfstate"
 terraform validate
 
 # Create a plan using dev variables, and save the plan

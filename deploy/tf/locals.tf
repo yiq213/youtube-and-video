@@ -8,6 +8,7 @@ locals {
     "cloudresourcemanager.googleapis.com",
     "cloudtrace.googleapis.com",
     "storage-component.googleapis.com", 
+    "storage.googleapis.com", 
     "artifactregistry.googleapis.com",
     "iam.googleapis.com",
     "aiplatform.googleapis.com",

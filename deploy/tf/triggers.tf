@@ -29,6 +29,7 @@ resource "google_cloudbuild_trigger" "cd_pipeline" {
     _SERVICE_NAME                  = var.service_name
     _LOG_LEVEL                     = var.log_level
     _MAX_INSTANCES                 = "1"
+    _CICD_RUNNER_SA_NAME           = "${var.cicd_runner_sa_name}@${var.project_id}.iam.gserviceaccount.com"
   }
 
   depends_on = [resource.google_project_service.apis, google_cloudbuildv2_repository.repo]

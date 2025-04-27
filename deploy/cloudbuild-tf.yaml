@@ -1,0 +1,65 @@
+# Cloud Build configuration for running Terraform
+
+# The service account Cloud Build should use.
+serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/your-terraform-runner-sa@$PROJECT_ID.iam.gserviceaccount.com'
+
+steps:
+  # === Initialize Terraform ===
+  # Assumes your Terraform files are in the 'deploy/' directory relative to your repo root.
+  # Assumes you are using a GCS backend for Terraform state, configured in your TF files.
+  # You might need to pass backend configuration dynamically if it changes per environment/project.
+  - name: 'hashicorp/terraform:1.7.5'
+    id: Terraform Init
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd deploy/tf
+
+        # Initialize Terraform - reads backend config, 
+        # which is stored in a GCS bucket. The Cloud Build service account must have access.
+        # If your backend bucket name is dynamic, you might pass it via substitution:
+        # terraform init -backend-config="bucket=$_TF_STATE_BUCKET"
+        terraform init
+
+  # === Generate Terraform Plan ===
+  # Generate a plan to see changes before applying.
+  # The plan file can be saved as an artifact for review or manual approval steps if needed.
+  - name: 'hashicorp/terraform:1.7.5'
+    id: Terraform Plan
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd deploy
+        terraform plan -out=tfplan
+
+    # Wait for init to complete
+    waitFor: ['Terraform Init']
+
+  # === Apply Terraform ===
+  # Apply the Terraform configuration automatically.
+  - name: 'hashicorp/terraform:1.7.5'
+    id: Terraform Apply
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - |
+        cd deploy/tf
+        terraform apply -auto-approve tfplan
+
+    # Wait for plan to complete
+    waitFor: ['Terraform Plan']
+
+# Default substitution values. These can be overridden by trigger settings or manual runs.
+# substitutions:
+  # _TF_STATE_BUCKET: 'your-tf-state-bucket-name' # Example if needed for init
+  # _TF_VAR_project_id: $PROJECT_ID # Example of passing TF variables
+
+# Build options
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+tags:
+  - terraform
+  - infrastructure

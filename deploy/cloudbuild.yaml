@@ -1,5 +1,7 @@
 # Cloud Build configuration for deploying the video-intelligence service
 
+# serviceAccount: 'projects/$PROJECT_ID/serviceAccounts/${_CICD_RUNNER_SA_EMAIL}'
+
 steps:
   # === Stage: Build ===
   # Build the Docker image using the Dockerfile in the specified source directory.
