@@ -2,7 +2,7 @@
 resource "google_cloudbuild_trigger" "app_cicd_trigger" {
   project = var.project_id
   location = var.cb_region # CB has quote restrictions in certain regions
-  name    = "deploy-video-intelligence"
+  name    = "deploy-video-intelligence-svc"
   service_account = resource.google_service_account.cicd_runner_sa.id
   description = "Trigger for ${var.trigger_branch_name} application deployment"
 
@@ -76,8 +76,8 @@ resource "google_cloudbuild_trigger" "tf_trigger" {
     _ORG                          = var.my_org
     _SERVICE_NAME                 = var.service_name
     _ARTIFACT_REPO_NAME           = var.artifact_repo_name
-    _REPO_NAME                    = var.repo_name
-    _REPO_OWNER                   = var.repo_owner
+    _REPO_NAME                    = var.repository_name
+    _REPO_OWNER                   = var.repository_owner
     _GITHUB_APP_INSTALLATION_ID   = var.github_app_installation_id
     _GITHUB_PAT_SECRET_ID         = var.github_pat_secret_id
     _BRANCH                       = var.trigger_branch_name
