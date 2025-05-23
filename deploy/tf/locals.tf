@@ -18,7 +18,8 @@ locals {
     "iam.googleapis.com",
     "serviceusage.googleapis.com",
     "logging.googleapis.com",
-    "secretmanager.googleapis.com"  
+    "secretmanager.googleapis.com",
+    "iap.googleapis.com"
   ]
 
   roles = [
@@ -35,6 +36,7 @@ locals {
     "roles/artifactregistry.writer",
     "roles/secretmanager.secretAccessor",
     "roles/cloudbuild.connectionAdmin", 
-    "roles/resourcemanager.projectIamAdmin"
+    "roles/resourcemanager.projectIamAdmin",
+    "roles/iap.admin"
   ]
 }

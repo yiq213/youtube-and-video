@@ -35,6 +35,7 @@ steps:
     id: Deploy # Step ID acts as a stage name
     entrypoint: gcloud
     args: 
+      - beta
       - run
       - deploy
       - $_SERVICE_NAME # Name of the Cloud Run service to update
@@ -45,6 +46,7 @@ steps:
         --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$SHORT_SHA,gcb-build-id=$BUILD_ID,gcb-trigger-id=$_TRIGGER_ID
       - '--region=$_DEPLOY_REGION' # Region where the service is deployed
       - '--allow-unauthenticated' # Allow unauthenticated invocations
+      - '--iap' # Enable direct IAP
       - '--max-instances=$_MAX_INSTANCES' # Limit the number of instances to 1
       - '--set-env-vars=PROJECT_ID=$PROJECT_ID,REGION=$_DEPLOY_REGION,LOG_LEVEL=$_LOG_LEVEL' # Environment variables for the service
       - '--quiet' # Suppress interactive prompts
